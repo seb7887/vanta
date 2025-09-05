@@ -1,0 +1,24 @@
+server:
+    port: 8080
+    host: 0.0.0.0
+    read_timeout: 30s
+    write_timeout: 30s
+    max_conns_per_ip: 100
+    max_request_size: 10MB
+    concurrency: 256000
+    reuse_port: true
+chaos:
+    enabled: false
+    scenarios: []
+plugins: []
+logging:
+    level: info
+    format: json
+    output: stdout
+    sampling: false
+    add_caller: true
+metrics:
+    enabled: true
+    port: 9090
+    path: /metrics
+    prometheus: true
