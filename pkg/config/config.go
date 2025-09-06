@@ -7,6 +7,7 @@ import (
 // Config represents the complete configuration structure
 type Config struct {
 	Server  ServerConfig  `yaml:"server"`
+	Mock    MockConfig    `yaml:"mock"`
 	Chaos   ChaosConfig   `yaml:"chaos"`
 	Plugins []PluginConfig `yaml:"plugins"`
 	Logging LoggingConfig `yaml:"logging"`
@@ -23,6 +24,15 @@ type ServerConfig struct {
 	MaxRequestSize  string        `yaml:"max_request_size"`
 	Concurrency     int           `yaml:"concurrency"`
 	ReusePort       bool          `yaml:"reuse_port"`
+}
+
+// MockConfig holds mock data generation configuration
+type MockConfig struct {
+	Seed             int64  `yaml:"seed"`               // Random seed for reproducible data generation
+	Locale           string `yaml:"locale"`             // Locale for data generation (e.g., "en", "es", "fr")
+	MaxDepth         int    `yaml:"max_depth"`          // Maximum depth for nested object generation
+	DefaultArraySize int    `yaml:"default_array_size"` // Default size for arrays when not specified
+	PreferExamples   bool   `yaml:"prefer_examples"`    // Prefer examples from OpenAPI spec when available
 }
 
 // LoggingConfig holds logging configuration

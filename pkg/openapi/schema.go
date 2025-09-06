@@ -111,6 +111,9 @@ type GenerationContext struct {
 	MaxDepth     int
 	CurrentDepth int
 	Visited      map[string]bool
+	ArraySizes   map[string]int
+	Required     bool
+	Parent       string
 	Locale       string
 	Seed         int64
 	Timestamp    time.Time

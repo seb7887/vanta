@@ -15,6 +15,13 @@ func DefaultConfig() *Config {
 			Concurrency:     256000,
 			ReusePort:       true,
 		},
+		Mock: MockConfig{
+			Seed:             0,     // 0 means use current timestamp
+			Locale:           "en",  // English by default
+			MaxDepth:         5,     // Reasonable depth to prevent infinite recursion
+			DefaultArraySize: 2,     // Small default array size
+			PreferExamples:   true,  // Prefer OpenAPI examples when available
+		},
 		Logging: LoggingConfig{
 			Level:     "info",
 			Format:    "json",

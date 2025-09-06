@@ -12,9 +12,10 @@ import (
 
 // Router handles HTTP routing and dispatching
 type Router struct {
-	routes map[string]map[string]HandlerFunc
-	spec   *openapi.Specification
-	logger *zap.Logger
+	routes    map[string]map[string]HandlerFunc
+	spec      *openapi.Specification
+	generator openapi.DataGenerator
+	logger    *zap.Logger
 }
 
 // HandlerFunc represents a route handler function
@@ -37,6 +38,33 @@ func NewRouter(spec *openapi.Specification, logger *zap.Logger) (*Router, error)
 
 	// Register routes from OpenAPI spec
 	if err := router.loadFromSpec(); err != nil {
+		return nil, fmt.Errorf("failed to load routes from spec: %w", err)
+	}
+
+	return router, nil
+}
+
+// NewRouterWithGenerator creates a new router instance with data generator
+func NewRouterWithGenerator(spec *openapi.Specification, generator openapi.DataGenerator, logger *zap.Logger) (*Router, error) {
+	if spec == nil {
+		return nil, fmt.Errorf("specification cannot be nil")
+	}
+	if generator == nil {
+		return nil, fmt.Errorf("generator cannot be nil")
+	}
+	if logger == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
+	router := &Router{
+		routes:    make(map[string]map[string]HandlerFunc),
+		spec:      spec,
+		generator: generator,
+		logger:    logger,
+	}
+
+	// Register routes from OpenAPI spec with generator
+	if err := router.loadFromSpecWithGenerator(); err != nil {
 		return nil, fmt.Errorf("failed to load routes from spec: %w", err)
 	}
 
@@ -103,6 +131,39 @@ func (r *Router) loadFromSpec() error {
 
 	r.logger.Info("Routes loaded from OpenAPI spec",
 		zap.Int("total_routes", r.getTotalRoutes()),
+	)
+
+	return nil
+}
+
+// loadFromSpecWithGenerator loads routes from OpenAPI specification using the data generator
+func (r *Router) loadFromSpecWithGenerator() error {
+	for path, pathItem := range r.spec.Paths {
+		if pathItem.GET != nil {
+			r.registerRoute("GET", path, MockHandler(r.spec, r.generator, r.logger))
+		}
+		if pathItem.POST != nil {
+			r.registerRoute("POST", path, MockHandler(r.spec, r.generator, r.logger))
+		}
+		if pathItem.PUT != nil {
+			r.registerRoute("PUT", path, MockHandler(r.spec, r.generator, r.logger))
+		}
+		if pathItem.DELETE != nil {
+			r.registerRoute("DELETE", path, MockHandler(r.spec, r.generator, r.logger))
+		}
+		if pathItem.PATCH != nil {
+			r.registerRoute("PATCH", path, MockHandler(r.spec, r.generator, r.logger))
+		}
+	}
+
+	// Add special routes
+	r.registerRoute("OPTIONS", "*", OptionsHandler())
+	r.registerRoute("GET", "/__health", HealthCheckHandler(r.spec))
+	r.registerRoute("GET", "/__info", InfoHandler(r.spec))
+
+	r.logger.Info("Routes loaded from OpenAPI spec with data generator",
+		zap.Int("total_routes", r.getTotalRoutes()),
+		zap.String("generator_type", "DefaultDataGenerator"),
 	)
 
 	return nil

@@ -12,11 +12,12 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	config *config.ServerConfig
-	router *Router
-	server *fasthttp.Server
-	logger *zap.Logger
-	spec   *openapi.Specification
+	config    *config.ServerConfig
+	router    *Router
+	server    *fasthttp.Server
+	logger    *zap.Logger
+	spec      *openapi.Specification
+	generator openapi.DataGenerator
 }
 
 // NewServer creates a new HTTP server instance
@@ -31,8 +32,21 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 		return nil, fmt.Errorf("logger cannot be nil")
 	}
 
-	// Create router
-	router, err := NewRouter(spec, logger)
+	// Initialize data generator with mock configuration
+	var generator openapi.DataGenerator
+	if cfg.Mock.Seed != 0 {
+		generator = openapi.NewDefaultDataGeneratorWithSeed(cfg.Mock.Seed)
+	} else {
+		generator = openapi.NewDefaultDataGenerator()
+	}
+	
+	// Configure generator
+	if cfg.Mock.Locale != "" {
+		generator.SetLocale(cfg.Mock.Locale)
+	}
+
+	// Create router with generator
+	router, err := NewRouterWithGenerator(spec, generator, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create router: %w", err)
 	}
@@ -57,11 +71,12 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 	}
 
 	return &Server{
-		config: &cfg.Server,
-		router: router,
-		server: server,
-		logger: logger,
-		spec:   spec,
+		config:    &cfg.Server,
+		router:    router,
+		server:    server,
+		logger:    logger,
+		spec:      spec,
+		generator: generator,
 	}, nil
 }
 

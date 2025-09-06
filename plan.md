@@ -1,429 +1,49 @@
-# Plan de Implementación Detallado - OpenAPI Mocker
+# Plan Paso a Paso para Completar OpenAPI Mocker al 100%
 
-## FASE 1: Configuración del Proyecto (Semanas 1-2)
+## Estado Actual (~65% Completado)
+**✅ Completado:**
+- Infraestructura base (CLI, configuración, parser OpenAPI)
+- **Sistema de generación de mock data completo** (recién implementado)
+- Servidor HTTP básico con handlers
+- 22 archivos Go implementados
 
-### 1.1 Inicialización del Proyecto Base
+**❌ Pendiente:** Funcionalidades avanzadas, experiencia de desarrollador, optimización
 
-#### Tarea 1.1.1: Estructura de Directorios
-- **Acción**: Crear directorio principal `openapi-mocker/`
-- **Comando**: `mkdir openapi-mocker && cd openapi-mocker`
-- **Estructura exacta a crear**:
-  ```
-  openapi-mocker/
-  ├── cmd/mocker/
-  ├── pkg/api/
-  ├── pkg/openapi/
-  ├── pkg/config/
-  ├── pkg/plugins/
-  ├── pkg/recorder/
-  ├── pkg/chaos/
-  ├── pkg/templates/
-  ├── pkg/cli/
-  ├── internal/cache/
-  ├── internal/hotreload/
-  ├── internal/metrics/
-  ├── internal/utils/
-  ├── test/fixtures/
-  ├── test/integration/
-  ├── test/benchmarks/
-  ├── test/examples/
-  ├── scripts/
-  └── docs/
-  ```
+---
 
-#### Tarea 1.1.2: Inicialización Go Module
-- **Acción**: Ejecutar `go mod init github.com/usuario/openapi-mocker`
-- **Archivo resultante**: `go.mod` con módulo base
-- **Verificar**: Comando `go mod tidy` ejecuta sin errores
+## **FASE 2 (FINALIZAR): Servidor HTTP Core - 10% faltante**
 
-#### Tarea 1.1.3: Dependencias Core
-- **Acción**: Agregar dependencias específicas al `go.mod`
-- **Dependencias exactas**:
-  ```go
-  github.com/valyala/fasthttp v1.51.0
-  github.com/spf13/cobra v1.8.0
-  github.com/spf13/viper v1.18.2
-  github.com/getkin/kin-openapi v0.120.0
-  github.com/charmbracelet/bubbletea v0.25.0
-  github.com/charmbracelet/lipgloss v0.9.1
-  go.uber.org/zap v1.26.0
-  github.com/prometheus/client_golang v1.18.0
-  github.com/brianvoe/gofakeit/v6 v6.23.2
-  github.com/fsnotify/fsnotify v1.7.0
-  github.com/stretchr/testify v1.8.4
-  ```
-- **Comando**: `go get <cada-dependencia>`
+### **Prioridad ALTA - Middleware Stack**
+```
+pkg/api/middleware.go - Crear middleware completo:
+- Logger middleware (request/response logging)
+- Recovery middleware (panic recovery)  
+- CORS middleware (configurable)
+- Timeout middleware
+- Metrics middleware
+```
 
-#### Tarea 1.1.4: Makefile Base
-- **Acción**: Crear `Makefile` con targets específicos
-- **Contenido exacto**:
-  ```makefile
-  .PHONY: build test clean install lint fmt vet
-  
-  build:
-  	go build -o bin/mocker ./cmd/mocker
-  
-  test:
-  	go test ./...
-  
-  clean:
-  	rm -rf bin/
-  
-  install:
-  	go install ./cmd/mocker
-  
-  lint:
-  	golangci-lint run
-  
-  fmt:
-  	go fmt ./...
-  
-  vet:
-  	go vet ./...
-  ```
+### **Prioridad ALTA - Hot Reload System**
+```
+internal/hotreload/watcher.go - File watcher con fsnotify
+internal/hotreload/reloader.go - Lógica de reload automático
+- Integración con server.go para reload sin downtime
+```
 
-### 1.2 CLI Framework Base
+---
 
-#### Tarea 1.2.1: Main Entry Point
-- **Archivo**: `cmd/mocker/main.go`
-- **Contenido específico**: 
-  - Importar cobra y zap
-  - Crear rootCmd con subcomandos: start, config, version
-  - Inicializar logger con zap
-  - Manejar signals (SIGINT, SIGTERM)
-- **Función main()**: Ejecutar rootCmd.Execute()
-- **Validar**: `go run cmd/mocker/main.go --help` muestra comandos
+## **FASE 3: Funcionalidades Avanzadas (~25% del proyecto total)**
 
-#### Tarea 1.2.2: Comando Start
-- **Archivo**: `cmd/mocker/start.go` 
-- **Flags requeridos**:
-  - `--spec` (string): Path al archivo OpenAPI
-  - `--port` (int): Puerto del servidor (default: 8080)
-  - `--host` (string): Host del servidor (default: "0.0.0.0")
-  - `--config` (string): Path al archivo de configuración
-- **Acción**: Parsear spec y iniciar servidor HTTP
-- **Validar**: `mocker start --help` muestra todas las flags
+### **3.1 Motor de Chaos Testing** ⚡ ALTA PRIORIDAD
+```
+pkg/chaos/engine.go     - Interface ChaosEngine y DefaultChaosEngine
+pkg/chaos/latency.go    - LatencyInjector (sleep random)  
+pkg/chaos/faults.go     - ErrorInjector (códigos HTTP error)
+pkg/chaos/config.go     - Estructuras de configuración
+cmd/mocker/chaos.go     - Comando CLI para chaos scenarios
+```
 
-#### Tarea 1.2.3: Comando Config
-- **Archivo**: `cmd/mocker/config.go`
-- **Subcomandos**:
-  - `config init`: Crear configuración por defecto
-  - `config validate`: Validar archivo de configuración
-  - `config edit`: Abrir editor interactivo
-- **Validar**: `mocker config init` crea `mocker.yaml`
-
-#### Tarea 1.2.4: Comando Version
-- **Archivo**: `cmd/mocker/version.go`
-- **Variables de build**: version, commit, buildTime
-- **Output formato**: `mocker version 1.0.0 (commit: abc123, built: 2024-01-01)`
-- **Validar**: `mocker version` muestra información correcta
-
-### 1.3 Configuración Base
-
-#### Tarea 1.3.1: Estructura de Configuración
-- **Archivo**: `pkg/config/config.go`
-- **Struct exacta**:
-  ```go
-  type Config struct {
-      Server    ServerConfig    `yaml:"server"`
-      Chaos     ChaosConfig     `yaml:"chaos"`
-      Plugins   []PluginConfig  `yaml:"plugins"`
-      Logging   LoggingConfig   `yaml:"logging"`
-      Metrics   MetricsConfig   `yaml:"metrics"`
-  }
-  
-  type ServerConfig struct {
-      Port            int           `yaml:"port"`
-      Host            string        `yaml:"host"`
-      ReadTimeout     time.Duration `yaml:"read_timeout"`
-      WriteTimeout    time.Duration `yaml:"write_timeout"`
-      MaxConnsPerIP   int           `yaml:"max_conns_per_ip"`
-      MaxRequestSize  string        `yaml:"max_request_size"`
-      Concurrency     int           `yaml:"concurrency"`
-      ReusePort       bool          `yaml:"reuse_port"`
-  }
-  ```
-
-#### Tarea 1.3.2: Carga de Configuración
-- **Archivo**: `pkg/config/loader.go`
-- **Función**: `Load(configPath string) (*Config, error)`
-- **Soporte**: YAML, JSON, environment variables
-- **Precedencia**: CLI flags > env vars > config file > defaults
-- **Usar**: Viper para carga y binding
-
-#### Tarea 1.3.3: Validación de Configuración
-- **Archivo**: `pkg/config/validation.go`
-- **Función**: `Validate(cfg *Config) error`
-- **Validaciones**:
-  - Puerto entre 1-65535
-  - Host válido (IP o hostname)
-  - Timeouts > 0
-  - MaxRequestSize parseable
-- **Return**: Lista de errores de validación
-
-#### Tarea 1.3.4: Configuración por Defecto
-- **Archivo**: `pkg/config/defaults.go`
-- **Función**: `DefaultConfig() *Config`
-- **Valores por defecto**:
-  - Port: 8080
-  - Host: "0.0.0.0"
-  - ReadTimeout: 30s
-  - WriteTimeout: 30s
-  - Concurrency: 256000
-- **Template**: Generar `mocker.yaml` con estos defaults
-
-### 1.4 Parser OpenAPI Base
-
-#### Tarea 1.4.1: Interface Parser
-- **Archivo**: `pkg/openapi/parser.go`
-- **Interface exacta**:
-  ```go
-  type SpecParser interface {
-      Parse(data []byte) (*Specification, error)
-      Validate(spec *Specification) error
-      GetEndpoints() []Endpoint
-      GetSchemas() map[string]*Schema
-  }
-  ```
-
-#### Tarea 1.4.2: Implementación Parser
-- **Archivo**: `pkg/openapi/parser.go`
-- **Struct**: `OpenAPIParser` implementando `SpecParser`
-- **Usar**: `github.com/getkin/kin-openapi`
-- **Soporte**: OpenAPI 3.0.x y Swagger 2.0
-- **Función**: `NewParser() SpecParser`
-
-#### Tarea 1.4.3: Estructuras de Datos
-- **Archivo**: `pkg/openapi/schema.go`
-- **Structs necesarias**:
-  ```go
-  type Specification struct {
-      Version   string
-      Info      InfoObject
-      Paths     map[string]PathItem
-      Schemas   map[string]*Schema
-      Security  []SecurityRequirement
-  }
-  
-  type Endpoint struct {
-      Path       string
-      Method     string
-      OperationID string
-      Parameters []Parameter
-      Responses  map[string]Response
-  }
-  ```
-
-#### Tarea 1.4.4: Tests Unitarios
-- **Archivo**: `pkg/openapi/parser_test.go`
-- **Test cases**:
-  - Parse valid OpenAPI 3.0 spec
-  - Parse valid Swagger 2.0 spec
-  - Parse invalid spec (should fail)
-  - Extract endpoints correctly
-  - Extract schemas correctly
-- **Fixtures**: Crear specs de ejemplo en `test/fixtures/`
-
-## FASE 2: Servidor HTTP Core (Semanas 3-4)
-
-### 2.1 Servidor HTTP Base
-
-#### Tarea 2.1.1: Servidor FastHTTP
-- **Archivo**: `pkg/api/server.go`
-- **Struct principal**:
-  ```go
-  type Server struct {
-      config    *config.ServerConfig
-      router    *Router
-      server    *fasthttp.Server
-      logger    *zap.Logger
-      metrics   *metrics.Collector
-  }
-  ```
-- **Funciones**:
-  - `NewServer(cfg *config.Config) *Server`
-  - `Start() error`
-  - `Stop() error`
-  - `Shutdown(ctx context.Context) error`
-
-#### Tarea 2.1.2: Router Dinámico
-- **Archivo**: `pkg/api/router.go`
-- **Struct**:
-  ```go
-  type Router struct {
-      routes    map[string]map[string]HandlerFunc
-      spec      *openapi.Specification
-      generator *openapi.DataGenerator
-  }
-  ```
-- **Funciones**:
-  - `RegisterEndpoint(method, path string, handler HandlerFunc)`
-  - `Match(method, path string) (HandlerFunc, map[string]string, bool)`
-  - `LoadFromSpec(spec *openapi.Specification) error`
-
-#### Tarea 2.1.3: Middleware Stack
-- **Archivo**: `pkg/api/middleware.go`
-- **Middlewares básicos**:
-  - Logger middleware (request/response logging)
-  - Metrics middleware (prometheus metrics)
-  - Recovery middleware (panic recovery)
-  - CORS middleware (configurable CORS)
-  - Timeout middleware (request timeout)
-- **Función**: `BuildMiddlewareStack(cfg *config.Config) []Middleware`
-
-#### Tarea 2.1.4: Handlers Base
-- **Archivo**: `pkg/api/handlers.go`
-- **Handler principal**: `MockHandler(ctx *fasthttp.RequestCtx)`
-- **Funciones**:
-  - Extraer endpoint de request
-  - Generar mock response
-  - Aplicar chaos scenarios
-  - Log request/response
-- **Error handling**: 404 para endpoints no encontrados
-
-### 2.2 Generación de Mock Data
-
-#### Tarea 2.2.1: Data Generator Core
-- **Archivo**: `pkg/openapi/generator.go`
-- **Interface**:
-  ```go
-  type DataGenerator interface {
-      Generate(schema *Schema, context *GenerationContext) (interface{}, error)
-      RegisterCustomGenerator(name string, generator CustomGenerator)
-      SetLocale(locale string)
-  }
-  ```
-- **Implementación**: `DefaultDataGenerator` struct
-- **Integrar**: `github.com/brianvoe/gofakeit/v6`
-
-#### Tarea 2.2.2: Generadores por Tipo
-- **Archivo**: `pkg/openapi/generators.go`
-- **Generadores específicos**:
-  - `generateString(schema *Schema) string`
-  - `generateInteger(schema *Schema) int64`
-  - `generateNumber(schema *Schema) float64`
-  - `generateBoolean() bool`
-  - `generateArray(schema *Schema, ctx *GenerationContext) []interface{}`
-  - `generateObject(schema *Schema, ctx *GenerationContext) map[string]interface{}`
-
-#### Tarea 2.2.3: Formatos Específicos
-- **Archivo**: `pkg/openapi/formats.go`
-- **Soporte para formatos**:
-  - `email`: Generar emails válidos
-  - `uri`: Generar URIs válidos
-  - `date`: Formato ISO date
-  - `date-time`: Formato RFC3339
-  - `uuid`: UUIDs v4
-  - `password`: Strings seguros
-- **Función**: `GenerateByFormat(format string, schema *Schema) interface{}`
-
-#### Tarea 2.2.4: Contexto de Generación
-- **Archivo**: `pkg/openapi/context.go`
-- **Struct**:
-  ```go
-  type GenerationContext struct {
-      MaxDepth     int
-      CurrentDepth int
-      Visited      map[string]bool
-      Locale       string
-      Faker        *gofakeit.Faker
-  }
-  ```
-- **Prevenir**: Referencias circulares infinitas
-- **Configurar**: Profundidad máxima, locale, semilla random
-
-### 2.3 Sistema de Templates
-
-#### Tarea 2.3.1: Template Engine
-- **Archivo**: `pkg/templates/engine.go`
-- **Usar**: Go template/text con funciones personalizadas
-- **Struct**:
-  ```go
-  type TemplateEngine struct {
-      templates map[string]*template.Template
-      functions template.FuncMap
-  }
-  ```
-- **Funciones**:
-  - `RegisterTemplate(name string, tmpl string) error`
-  - `Execute(name string, data interface{}) (string, error)`
-  - `RegisterFunction(name string, fn interface{})`
-
-#### Tarea 2.3.2: Funciones de Template
-- **Archivo**: `pkg/templates/functions.go`
-- **Funciones disponibles**:
-  - `fake`: Acceso a gofakeit (`{{ fake "name.first" }}`)
-  - `random`: Números random (`{{ random 1 100 }}`)
-  - `uuid`: Generar UUID (`{{ uuid }}`)
-  - `now`: Fecha actual (`{{ now "2006-01-02" }}`)
-  - `env`: Variables de entorno (`{{ env "API_KEY" }}`)
-  - `json`: Serializar a JSON (`{{ json . }}`)
-- **Registrar**: Todas las funciones en `template.FuncMap`
-
-#### Tarea 2.3.3: Response Templates
-- **Soporte**: Templates en responses de OpenAPI spec
-- **Ejemplo uso**:
-  ```yaml
-  responses:
-    200:
-      description: User list
-      content:
-        application/json:
-          example: |
-            {
-              "users": [
-                {{ range $i := until 5 }}
-                {
-                  "id": {{ random 1 1000 }},
-                  "name": "{{ fake "name.name" }}",
-                  "email": "{{ fake "internet.email" }}"
-                }{{ if not (last $i) }},{{ end }}
-                {{ end }}
-              ]
-            }
-  ```
-
-#### Tarea 2.3.4: Template Validation
-- **Archivo**: `pkg/templates/validator.go`
-- **Función**: `ValidateTemplate(tmpl string) error`
-- **Validar**: Sintaxis de template, funciones existentes
-- **Error handling**: Errores descriptivos de parsing
-
-### 2.4 Hot Reload System
-
-#### Tarea 2.4.1: File Watcher
-- **Archivo**: `internal/hotreload/watcher.go`
-- **Usar**: `github.com/fsnotify/fsnotify`
-- **Struct**:
-  ```go
-  type FileWatcher struct {
-      watcher   *fsnotify.Watcher
-      files     []string
-      callback  func(string) error
-      logger    *zap.Logger
-  }
-  ```
-- **Watch**: Archivos OpenAPI spec y configuración
-
-#### Tarea 2.4.2: Reload Logic
-- **Archivo**: `internal/hotreload/reloader.go`
-- **Función**: `ReloadServer(specPath string) error`
-- **Proceso**:
-  1. Validar nuevo spec
-  2. Crear nuevo router
-  3. Atomic swap del router actual
-  4. Log del reload exitoso
-- **Rollback**: En caso de spec inválido
-
-#### Tarea 2.4.3: Integración con Server
-- **Modificar**: `pkg/api/server.go`
-- **Agregar**: Campo `reloader *hotreload.Reloader`
-- **Función**: `EnableHotReload(specPath string) error`
-- **Callback**: Actualizar router cuando cambie spec
-
-## FASE 3: Funcionalidades Avanzadas (Semanas 5-6)
-
-### 3.1 Motor de Chaos Testing
+**Implementación detallada:**
 
 #### Tarea 3.1.1: Chaos Engine Core
 - **Archivo**: `pkg/chaos/engine.go`
@@ -484,7 +104,16 @@
   }
   ```
 
-### 3.2 Recording y Replay System
+### **3.2 Recording y Replay System** 🔄 MEDIA PRIORIDAD  
+```
+pkg/recorder/recorder.go  - Request recorder principal
+pkg/recorder/storage.go   - Storage interface (file-based)
+pkg/recorder/replay.go    - Traffic replayer
+pkg/recorder/types.go     - Recording data structures  
+cmd/mocker/record.go      - Comandos CLI record/replay
+```
+
+**Implementación detallada:**
 
 #### Tarea 3.2.1: Request Recorder
 - **Archivo**: `pkg/recorder/recorder.go`
@@ -542,7 +171,15 @@
   }
   ```
 
-### 3.3 Plugin Architecture
+### **3.3 Plugin Architecture** 🔌 BAJA PRIORIDAD
+```
+pkg/plugins/interface.go  - Plugin interfaces
+pkg/plugins/manager.go    - Plugin manager
+pkg/plugins/builtin.go    - Built-in plugins (auth, rate-limit, CORS)
+pkg/plugins/config.go     - Plugin configuration
+```
+
+**Implementación detallada:**
 
 #### Tarea 3.3.1: Plugin Interfaces
 - **Archivo**: `pkg/plugins/interface.go`
@@ -601,9 +238,20 @@
   ```
 - **Load**: Plugins desde configuración YAML
 
-## FASE 4: Experiencia de Desarrollador (Semanas 7-8)
+---
 
-### 4.1 Terminal UI Interactiva
+## **FASE 4: Experiencia de Desarrollador (~15% del proyecto total)**
+
+### **4.1 Terminal UI Interactiva** 📊 ALTA PRIORIDAD
+```
+Dependencia: github.com/charmbracelet/bubbletea
+pkg/cli/tui.go           - TUI framework principal  
+- Dashboard de métricas (RPS, latency, errors)
+- Log viewer en tiempo real
+- Configuration editor interactivo
+```
+
+**Implementación detallada:**
 
 #### Tarea 4.1.1: TUI Framework
 - **Archivo**: `pkg/cli/tui.go`
@@ -648,7 +296,14 @@
   - Reset to defaults
 - **Form fields**: Para cada configuración importante
 
-### 4.2 Enhanced CLI Commands
+### **4.2 Enhanced CLI Commands** ⚡ ALTA PRIORIDAD
+```
+cmd/mocker/loadtest.go   - Comando load testing
+cmd/mocker/daemon.go     - Daemon mode (background)
+pkg/cli/completion.go    - Shell completion (bash/zsh/fish)
+```
+
+**Implementación detallada:**
 
 #### Tarea 4.2.1: Load Testing Command
 - **Archivo**: `cmd/mocker/loadtest.go`
@@ -683,7 +338,23 @@
 - **Commands**: `mocker completion bash|zsh|fish`
 - **Features**: Complete flags, file paths, scenarios
 
-### 4.3 CI/CD Integration
+#### Tarea 4.2.5: Background Daemon Mode
+- **Comando**: `mocker daemon`
+- **Subcomandos**:
+  - `daemon start`: Start in background
+  - `daemon stop`: Stop daemon
+  - `daemon status`: Check daemon status
+  - `daemon logs`: View daemon logs
+- **PID file**: Para daemon management
+
+### **4.3 CI/CD Integration** 🐳 MEDIA PRIORIDAD
+```
+Dockerfile              - Multi-stage Docker build
+examples/k8s/           - Kubernetes manifests
+examples/ci/            - GitHub Actions workflow  
+```
+
+**Implementación detallada:**
 
 #### Tarea 4.3.1: Docker Support
 - **Archivo**: `Dockerfile`
@@ -712,18 +383,19 @@
   - Collect metrics
 - **Matrix**: Multiple versions de OpenAPI specs
 
-#### Tarea 4.3.4: Background Daemon Mode
-- **Comando**: `mocker daemon`
-- **Subcomandos**:
-  - `daemon start`: Start in background
-  - `daemon stop`: Stop daemon
-  - `daemon status`: Check daemon status
-  - `daemon logs`: View daemon logs
-- **PID file**: Para daemon management
+---
 
-## FASE 5: Optimización y Distribución (Semanas 9-10)
+## **FASE 5: Optimización y Distribución (~10% del proyecto total)**
 
-### 5.1 Performance y Monitoring
+### **5.1 Performance y Monitoring** 📈 ALTA PRIORIDAD
+```
+internal/metrics/collector.go   - Metrics collection system
+internal/metrics/prometheus.go  - Prometheus integration (/metrics)
+internal/metrics/dashboard.go   - Built-in web dashboard
+internal/cache/memory.go        - LRU caching system
+```
+
+**Implementación detallada:**
 
 #### Tarea 5.1.1: Metrics Collection
 - **Archivo**: `internal/metrics/collector.go`
@@ -762,7 +434,14 @@
   - Thread-safe access
 - **Cache**: Parsed specs, generated responses
 
-### 5.2 Build y Release Process
+### **5.2 Build y Release Process** 🚀 MEDIA PRIORIDAD
+```
+.goreleaser.yml         - GoReleaser configuration
+scripts/build.sh        - Build automation scripts
+pkg/updater/updater.go  - Auto-updater system
+```
+
+**Implementación detallada:**
 
 #### Tarea 5.2.1: GoReleaser Configuration
 - **Archivo**: `.goreleaser.yml`
@@ -800,7 +479,15 @@
   - Rollback en caso de error
 - **Command**: `mocker update` para manual updates
 
-### 5.3 Documentation y Examples
+### **5.3 Documentation** 📚 BAJA PRIORIDAD
+```
+docs/api.md            - Complete API documentation
+docs/configuration.md  - Configuration guide
+docs/plugins.md        - Plugin development guide
+test/examples/         - Example OpenAPI specs
+```
+
+**Implementación detallada:**
 
 #### Tarea 5.3.1: API Documentation
 - **Archivo**: `docs/api.md`
@@ -838,7 +525,38 @@
   - Testing strategies
   - Example plugin walkthrough
 
-## CRITERIOS DE ACEPTACIÓN Y VALIDACIÓN
+---
+
+## **ROADMAP RECOMENDADO (Orden de Prioridades)**
+
+### **Sprint 1: Completar Core (2-3 días)**
+1. ✅ Middleware stack completo
+2. ✅ Hot reload system
+3. ✅ Tests de integración
+
+### **Sprint 2: Chaos Testing (3-4 días)**  
+1. ✅ Chaos engine + latency/error injection
+2. ✅ Comandos CLI para chaos
+3. ✅ Configuración y documentación
+
+### **Sprint 3: Monitoring y UX (3-4 días)**
+1. ✅ Sistema de métricas + Prometheus
+2. ✅ Terminal UI interactiva
+3. ✅ Load testing + daemon mode
+
+### **Sprint 4: Recording + Optimización (2-3 días)**
+1. ✅ Recording/replay system  
+2. ✅ Memory caching
+3. ✅ Performance optimization
+
+### **Sprint 5: Distribución (1-2 días)**
+1. ✅ Docker + K8s manifests
+2. ✅ GoReleaser + build automation
+3. ✅ Documentation completa
+
+---
+
+## **CRITERIOS DE ACEPTACIÓN Y VALIDACIÓN**
 
 ### Para cada tarea:
 1. **Código compilar sin errores**: `go build ./...`
@@ -859,4 +577,13 @@
 - **Chaos testing**: Todos los scenarios funcionando
 - **Hot reload**: Sin drops de requests durante reload
 
-Este plan está diseñado para que Claude Code pueda ejecutar cada tarea específica usando las herramientas disponibles (Write, Edit, Bash, etc.) con instrucciones claras y verificables.
+---
+
+## **Estimación de Completitud al Final:**
+- **Estado actual**: ~65%
+- **Post Sprint 1**: ~75% 
+- **Post Sprint 2**: ~85%
+- **Post Sprint 3**: ~95%
+- **Post Sprints 4-5**: **100%** ✅
+
+**Recomendación**: Empezar con **Sprint 1** para tener el core completamente sólido antes de funcionalidades avanzadas.
