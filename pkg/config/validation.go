@@ -242,6 +242,11 @@ func validateChaos(cfg *ChaosConfig) ValidationErrors {
 	return errors
 }
 
+// ValidateConfig validates the complete configuration (alias for Validate)
+func ValidateConfig(cfg *Config) error {
+	return Validate(cfg)
+}
+
 // parseSize parses a size string like "10MB" and returns bytes
 func parseSize(size string) (int64, error) {
 	size = strings.TrimSpace(strings.ToUpper(size))

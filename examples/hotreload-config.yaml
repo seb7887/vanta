@@ -1,0 +1,66 @@
+# Example configuration file demonstrating hot reload capabilities
+server:
+  port: 8080
+  host: "0.0.0.0"
+  read_timeout: "30s"
+  write_timeout: "30s"
+  max_conns_per_ip: 100
+  max_request_size: "10MB"
+  concurrency: 256000
+  reuse_port: true
+
+# Mock data generation configuration
+mock:
+  seed: 42
+  locale: "en"
+  max_depth: 5
+  default_array_size: 2
+  prefer_examples: true
+
+# Logging configuration
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  sampling: false
+  add_caller: true
+
+# Metrics configuration
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  prometheus: true
+
+# Chaos engineering configuration
+chaos:
+  enabled: false
+  scenarios: []
+
+# Middleware configuration
+middleware:
+  request_id: true
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    allow_headers: ["Content-Type", "Authorization", "X-Request-ID"]
+    allow_credentials: false
+    max_age: 3600
+  timeout:
+    enabled: false
+    duration: "30s"
+  recovery:
+    enabled: true
+    print_stack: false
+    log_stack: true
+
+# Hot reload configuration - THIS IS THE KEY SECTION
+hotreload:
+  enabled: true           # Enable hot reload functionality
+  watch_config: true      # Watch this config file for changes
+  watch_spec: true        # Watch OpenAPI spec file for changes
+  debounce_delay: "500ms" # Debounce delay to avoid rapid reloads
+
+# Plugin configuration (if any)
+plugins: []

@@ -53,6 +53,11 @@ func WriteToFile(cfg *Config, filePath string) error {
 	return nil
 }
 
+// LoadConfig loads configuration from a file path (alias for LoadFromFile)
+func LoadConfig(configPath string) (*Config, error) {
+	return LoadFromFile(configPath)
+}
+
 // setDefaults sets default values in viper
 func setDefaults(v *viper.Viper) {
 	// Server defaults - use time.Duration values for proper parsing
@@ -80,4 +85,10 @@ func setDefaults(v *viper.Viper) {
 
 	// Chaos defaults
 	v.SetDefault("chaos.enabled", false)
+
+	// Hot reload defaults
+	v.SetDefault("hotreload.enabled", false)
+	v.SetDefault("hotreload.watch_config", true)
+	v.SetDefault("hotreload.watch_spec", true)
+	v.SetDefault("hotreload.debounce_delay", 500*time.Millisecond)
 }

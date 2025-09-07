@@ -3,6 +3,7 @@ package openapi
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -345,4 +346,42 @@ func (p *OpenAPIParser) extractSchemas(spec *openapi3.T) {
 			}
 		}
 	}
+}
+
+// LoadSpecification loads an OpenAPI specification from a file
+func LoadSpecification(specPath string) (*Specification, error) {
+	data, err := os.ReadFile(specPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read spec file: %w", err)
+	}
+
+	parser := NewParser()
+	spec, err := parser.Parse(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse spec: %w", err)
+	}
+
+	return spec, nil
+}
+
+// ValidateSpecification validates an OpenAPI specification
+func ValidateSpecification(spec *Specification) error {
+	if spec == nil {
+		return fmt.Errorf("specification cannot be nil")
+	}
+	
+	if spec.Info.Title == "" {
+		return fmt.Errorf("specification title is required")
+	}
+	
+	if spec.Info.Version == "" {
+		return fmt.Errorf("specification version is required")
+	}
+	
+	if len(spec.Paths) == 0 {
+		return fmt.Errorf("specification must have at least one path")
+	}
+	
+	// Basic validation - could be expanded
+	return nil
 }

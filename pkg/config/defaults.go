@@ -40,5 +40,31 @@ func DefaultConfig() *Config {
 			Scenarios: []ScenarioConfig{},
 		},
 		Plugins: []PluginConfig{},
+		Middleware: MiddlewareConfig{
+			RequestID: true, // Enable request ID by default for traceability
+			CORS: CORSConfig{
+				Enabled:          false, // Disabled by default for security
+				AllowOrigins:     []string{"*"},
+				AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+				AllowHeaders:     []string{"Content-Type", "Authorization", "X-Request-ID"},
+				AllowCredentials: false,
+				MaxAge:           3600,
+			},
+			Timeout: TimeoutConfig{
+				Enabled:  false, // Disabled by default to avoid breaking existing functionality
+				Duration: 30 * time.Second,
+			},
+			Recovery: RecoveryConfig{
+				Enabled:    true,  // Enabled by default for stability
+				PrintStack: false, // Don't print to stdout by default
+				LogStack:   true,  // Log stack traces for debugging
+			},
+		},
+		HotReload: HotReloadConfig{
+			Enabled:       false, // Disabled by default
+			WatchConfig:   true,  // Watch config file when enabled
+			WatchSpec:     true,  // Watch OpenAPI spec file when enabled
+			DebounceDelay: 500 * time.Millisecond, // Default debounce delay
+		},
 	}
 }

@@ -6,12 +6,14 @@ import (
 
 // Config represents the complete configuration structure
 type Config struct {
-	Server  ServerConfig  `yaml:"server"`
-	Mock    MockConfig    `yaml:"mock"`
-	Chaos   ChaosConfig   `yaml:"chaos"`
-	Plugins []PluginConfig `yaml:"plugins"`
-	Logging LoggingConfig `yaml:"logging"`
-	Metrics MetricsConfig `yaml:"metrics"`
+	Server     ServerConfig     `yaml:"server"`
+	Mock       MockConfig       `yaml:"mock"`
+	Chaos      ChaosConfig      `yaml:"chaos"`
+	Plugins    []PluginConfig   `yaml:"plugins"`
+	Logging    LoggingConfig    `yaml:"logging"`
+	Metrics    MetricsConfig    `yaml:"metrics"`
+	Middleware MiddlewareConfig `yaml:"middleware"`
+	HotReload  HotReloadConfig  `yaml:"hotreload"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -72,4 +74,43 @@ type PluginConfig struct {
 	Name    string                 `yaml:"name"`
 	Enabled bool                   `yaml:"enabled"`
 	Config  map[string]interface{} `yaml:"config"`
+}
+
+// MiddlewareConfig holds middleware configuration
+type MiddlewareConfig struct {
+	CORS      CORSConfig     `yaml:"cors"`
+	Timeout   TimeoutConfig  `yaml:"timeout"`
+	Recovery  RecoveryConfig `yaml:"recovery"`
+	RequestID bool           `yaml:"request_id"` // Simple flag for request ID middleware
+}
+
+// CORSConfig holds CORS middleware configuration
+type CORSConfig struct {
+	Enabled          bool     `yaml:"enabled"`
+	AllowOrigins     []string `yaml:"allow_origins"`
+	AllowMethods     []string `yaml:"allow_methods"`
+	AllowHeaders     []string `yaml:"allow_headers"`
+	AllowCredentials bool     `yaml:"allow_credentials"`
+	MaxAge           int      `yaml:"max_age"`
+}
+
+// TimeoutConfig holds timeout middleware configuration
+type TimeoutConfig struct {
+	Enabled  bool          `yaml:"enabled"`
+	Duration time.Duration `yaml:"duration"`
+}
+
+// RecoveryConfig holds recovery middleware configuration
+type RecoveryConfig struct {
+	Enabled    bool `yaml:"enabled"`
+	PrintStack bool `yaml:"print_stack"`
+	LogStack   bool `yaml:"log_stack"`
+}
+
+// HotReloadConfig holds hot reload configuration
+type HotReloadConfig struct {
+	Enabled       bool          `yaml:"enabled"`
+	WatchConfig   bool          `yaml:"watch_config"`
+	WatchSpec     bool          `yaml:"watch_spec"`
+	DebounceDelay time.Duration `yaml:"debounce_delay"`
 }
