@@ -9,6 +9,7 @@ type Config struct {
 	Server     ServerConfig     `yaml:"server"`
 	Mock       MockConfig       `yaml:"mock"`
 	Chaos      ChaosConfig      `yaml:"chaos"`
+	Recording  RecordingConfig  `yaml:"recording"`
 	Plugins    []PluginConfig   `yaml:"plugins"`
 	Logging    LoggingConfig    `yaml:"logging"`
 	Metrics    MetricsConfig    `yaml:"metrics"`
@@ -113,4 +114,29 @@ type HotReloadConfig struct {
 	WatchConfig   bool          `yaml:"watch_config"`
 	WatchSpec     bool          `yaml:"watch_spec"`
 	DebounceDelay time.Duration `yaml:"debounce_delay"`
+}
+
+// RecordingConfig holds recording system configuration
+type RecordingConfig struct {
+	Enabled        bool              `yaml:"enabled"`
+	Storage        StorageConfig     `yaml:"storage"`
+	Filters        []RecordingFilter `yaml:"filters"`
+	MaxRecordings  int               `yaml:"max_recordings"`
+	MaxBodySize    int64             `yaml:"max_body_size"`
+	IncludeHeaders []string          `yaml:"include_headers"`
+	ExcludeHeaders []string          `yaml:"exclude_headers"`
+}
+
+// StorageConfig defines storage backend configuration
+type StorageConfig struct {
+	Type      string `yaml:"type"`      // "file", "memory"
+	Directory string `yaml:"directory"` // For file storage
+	Format    string `yaml:"format"`    // "json", "jsonlines"
+}
+
+// RecordingFilter defines filtering rules for recordings
+type RecordingFilter struct {
+	Type   string   `yaml:"type"`   // "endpoint", "method", "status"
+	Values []string `yaml:"values"`
+	Negate bool     `yaml:"negate"` // Exclude instead of include
 }

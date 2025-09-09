@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"vanta/pkg/chaos"
 	"vanta/pkg/config"
+	"vanta/pkg/recorder"
 )
 
 // MiddlewareFunc is the type of function for FastHTTP middleware
@@ -462,6 +463,43 @@ func Chaos(chaosEngine chaos.ChaosEngine, logger *zap.Logger) MiddlewareFunc {
 			
 			// For other types of chaos (like latency), continue with normal processing
 			next(ctx)
+		}
+	}
+}
+
+// Recording returns a middleware that records HTTP requests and responses
+func Recording(recordingEngine recorder.RecordingEngine, logger *zap.Logger) MiddlewareFunc {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(ctx *fasthttp.RequestCtx) {
+			// Check if recording engine is enabled
+			if recordingEngine == nil || !recordingEngine.IsEnabled() {
+				next(ctx)
+				return
+			}
+			
+			// Record start time for duration calculation
+			startTime := time.Now()
+			
+			// Execute next handler
+			next(ctx)
+			
+			// Calculate request duration
+			duration := time.Since(startTime)
+			
+			// Get response body (make a copy since fasthttp reuses buffers)
+			responseBody := make([]byte, len(ctx.Response.Body()))
+			copy(responseBody, ctx.Response.Body())
+			
+			// Record the request/response in a goroutine to avoid blocking
+			go func() {
+				if err := recordingEngine.Record(ctx, responseBody, duration); err != nil {
+					logger.Error("Failed to record request",
+						zap.Error(err),
+						zap.String("method", string(ctx.Method())),
+						zap.String("path", string(ctx.Path())),
+						zap.Int("status", ctx.Response.StatusCode()))
+				}
+			}()
 		}
 	}
 }

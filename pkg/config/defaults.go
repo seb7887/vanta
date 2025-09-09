@@ -66,5 +66,23 @@ func DefaultConfig() *Config {
 			WatchSpec:     true,  // Watch OpenAPI spec file when enabled
 			DebounceDelay: 500 * time.Millisecond, // Default debounce delay
 		},
+		Recording: RecordingConfig{
+			Enabled:       false, // Disabled by default
+			MaxRecordings: 1000,  // Default max recordings
+			MaxBodySize:   1024 * 1024, // 1MB default max body size
+			Storage: StorageConfig{
+				Type:      "file",      // File storage by default
+				Directory: "./recordings", // Default directory
+				Format:    "jsonlines", // JSON Lines format by default
+			},
+			Filters:        []RecordingFilter{}, // No filters by default
+			IncludeHeaders: []string{}, // Include all headers by default
+			ExcludeHeaders: []string{ // Exclude sensitive headers by default
+				"cookie",
+				"set-cookie",
+				"authorization", 
+				"x-api-key",
+			},
+		},
 	}
 }

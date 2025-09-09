@@ -10,6 +10,7 @@ import (
 	"vanta/pkg/chaos"
 	"vanta/pkg/config"
 	"vanta/pkg/openapi"
+	"vanta/pkg/recorder"
 )
 
 // Server represents the HTTP server
@@ -23,6 +24,7 @@ type Server struct {
 	generator        openapi.DataGenerator
 	metricsCollector *DefaultMetricsCollector
 	chaosEngine      chaos.ChaosEngine
+	recordingEngine  recorder.RecordingEngine
 	
 	// Hot reload support
 	mu       sync.RWMutex
@@ -77,6 +79,21 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 		}
 	}
 
+	// Create recording engine if enabled
+	var recordingEngine recorder.RecordingEngine
+	if cfg.Recording.Enabled {
+		storage, err := recorder.NewFileStorage(&cfg.Recording.Storage, logger)
+		if err != nil {
+			logger.Warn("Failed to create recording storage", zap.Error(err))
+		} else {
+			recordingEngine = recorder.NewDefaultRecordingEngine(storage, logger)
+			if err := recordingEngine.Start(&cfg.Recording); err != nil {
+				logger.Warn("Failed to start recording engine", zap.Error(err))
+				recordingEngine = nil
+			}
+		}
+	}
+
 	// Create and configure middleware stack
 	stack := NewStack()
 
@@ -107,6 +124,11 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 
 	if cfg.Metrics.Enabled && metricsCollector != nil {
 		stack.Use(Metrics(&cfg.Metrics, metricsCollector))
+	}
+
+	// Add recording middleware if enabled - place after metrics to capture complete response
+	if recordingEngine != nil {
+		stack.Use(Recording(recordingEngine, logger))
 	}
 
 	// Apply middleware stack to router
@@ -141,6 +163,7 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 		generator:        generator,
 		metricsCollector: metricsCollector,
 		chaosEngine:      chaosEngine,
+		recordingEngine:  recordingEngine,
 	}, nil
 }
 
@@ -242,6 +265,8 @@ func (s *Server) Restart(newConfig *config.Config, newSpec *openapi.Specificatio
 	s.spec = newServer.spec
 	s.generator = newServer.generator
 	s.metricsCollector = newServer.metricsCollector
+	s.chaosEngine = newServer.chaosEngine
+	s.recordingEngine = newServer.recordingEngine
 	s.mu.Unlock()
 	
 	// Start with new configuration
@@ -286,6 +311,13 @@ func (s *Server) GetMetrics() map[string]interface{} {
 		return map[string]interface{}{"error": "metrics not enabled"}
 	}
 	return s.metricsCollector.GetMetrics()
+}
+
+// GetRecordingEngine returns the recording engine if available
+func (s *Server) GetRecordingEngine() recorder.RecordingEngine {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.recordingEngine
 }
 
 // ServerStats represents server statistics

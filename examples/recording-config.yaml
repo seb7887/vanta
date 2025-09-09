@@ -1,0 +1,205 @@
+# Complete OpenAPI Mocker Configuration with Recording System
+# This example demonstrates all recording and replay features
+
+# Server configuration
+server:
+  port: 8080
+  host: "0.0.0.0"
+  read_timeout: 30s
+  write_timeout: 30s
+  max_conns_per_ip: 100
+  concurrency: 256000
+
+# Mock data generation
+mock:
+  seed: 12345                    # Fixed seed for reproducible responses
+  locale: "en"                   # English locale for generated data
+  max_depth: 5                   # Maximum nesting level for objects
+  default_array_size: 3          # Default array size when not specified
+  prefer_examples: true          # Use examples from OpenAPI spec when available
+
+# Logging configuration
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  sampling: false
+  add_caller: true
+
+# Metrics collection
+metrics:
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  prometheus: true
+
+# Middleware stack
+middleware:
+  request_id: true              # Enable request ID tracking for recordings
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    allow_headers: ["Content-Type", "Authorization", "X-Request-ID"]
+    allow_credentials: false
+    max_age: 3600
+  timeout:
+    enabled: true
+    duration: 30s
+  recovery:
+    enabled: true
+    print_stack: false
+    log_stack: true
+
+# Recording System Configuration
+recording:
+  # Enable recording of API traffic
+  enabled: true
+  
+  # Storage configuration
+  storage:
+    type: "file"                    # Storage backend: "file" or "memory"
+    directory: "./recordings"       # Directory for file storage
+    format: "jsonlines"            # Format: "json" or "jsonlines"
+  
+  # Recording limits
+  max_recordings: 1000              # Maximum number of recordings to keep
+  max_body_size: 1048576           # Maximum body size to record (1MB)
+  
+  # Header filtering
+  include_headers:                  # Only include these headers (if specified)
+    - "content-type"
+    - "user-agent"
+    - "authorization"
+    - "x-api-key"
+    - "x-request-id"
+    - "accept"
+    - "accept-language"
+  
+  exclude_headers:                  # Always exclude these headers
+    - "cookie"
+    - "set-cookie"
+    - "x-forwarded-for"
+    - "x-real-ip"
+    - "connection"
+    - "keep-alive"
+  
+  # Recording filters
+  filters:
+    # Include only specific HTTP methods
+    - type: "method"
+      values: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+      negate: false
+    
+    # Include only API endpoints (exclude static files)
+    - type: "endpoint"
+      values: ["/api/*", "/v1/*", "/v2/*"]
+      negate: false
+    
+    # Exclude certain status codes (don't record redirects)
+    - type: "status"
+      values: ["301", "302", "303", "307", "308"]
+      negate: true
+
+# Chaos testing (works alongside recording)
+chaos:
+  enabled: false                    # Can be enabled with recording
+  scenarios:
+    - name: "api-latency"
+      type: "latency"
+      endpoints: ["/api/*"]
+      probability: 0.05             # 5% of requests
+      parameters:
+        min_delay: "100ms"
+        max_delay: "500ms"
+    
+    - name: "service-errors"
+      type: "error"
+      endpoints: ["/api/users/*", "/api/orders/*"]
+      probability: 0.03             # 3% of requests
+      parameters:
+        status_codes: [500, 502, 503]
+        message: "Service temporarily unavailable"
+
+# Hot reload for development
+hotreload:
+  enabled: true
+  watch_config: true               # Watch this config file
+  watch_spec: true                 # Watch OpenAPI spec file
+  debounce_delay: 500ms
+
+# Example usage scenarios:
+
+# 1. Basic Recording:
+#    mocker start --spec api.yaml --config recording-config.yaml
+#    # Make some API calls to your mocker
+#    mocker record list
+
+# 2. Filtered Recording:
+#    mocker record start --filter "method:GET" --filter "endpoint:/api/users"
+
+# 3. Replay Traffic:
+#    mocker record replay --target http://localhost:9000 --concurrency 3
+
+# 4. Export Recordings:
+#    mocker record export --format har --output traffic.har
+#    mocker record export --format postman --output collection.json
+
+# 5. Recording with Chaos:
+#    # Enable both recording and chaos to capture real failure scenarios
+#    # Set chaos.enabled: true and recording.enabled: true
+
+# Advanced Recording Configuration Examples:
+
+# Configuration for Production Traffic Recording:
+# recording:
+#   enabled: true
+#   storage:
+#     type: "file"
+#     directory: "/var/log/api-recordings"
+#     format: "jsonlines"
+#   max_recordings: 10000
+#   max_body_size: 524288          # 512KB limit for production
+#   include_headers:
+#     - "content-type"
+#     - "user-agent"
+#     - "x-request-id"
+#   exclude_headers:
+#     - "authorization"             # Exclude sensitive headers
+#     - "cookie"
+#     - "x-api-key"
+#   filters:
+#     - type: "method"
+#       values: ["GET", "POST", "PUT", "DELETE"]
+#       negate: false
+#     - type: "status"
+#       values: ["200", "201", "400", "404", "500"]
+#       negate: false
+
+# Configuration for Development/Testing:
+# recording:
+#   enabled: true
+#   storage:
+#     type: "memory"               # In-memory for testing
+#   max_recordings: 100
+#   max_body_size: 10485760       # 10MB for development
+#   include_headers: []            # Include all headers
+#   exclude_headers: []            # Don't exclude any headers
+#   filters: []                    # No filters - record everything
+
+# Configuration for Load Testing:
+# recording:
+#   enabled: true
+#   storage:
+#     type: "file"
+#     directory: "./load-test-recordings"
+#     format: "jsonlines"
+#   max_recordings: 50000
+#   max_body_size: 2097152        # 2MB
+#   filters:
+#     - type: "method"
+#       values: ["GET", "POST"]    # Focus on main operations
+#       negate: false
+#     - type: "status"
+#       values: ["200", "201"]     # Only successful requests
+#       negate: false
