@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
+	"vanta/pkg/chaos"
 	"vanta/pkg/config"
 )
 
@@ -413,6 +414,54 @@ func Metrics(metricsCfg *config.MetricsConfig, collector MetricsCollector) Middl
 			
 			collector.IncRequestCounter(method, path, status)
 			collector.ObserveLatency(method, path, duration)
+		}
+	}
+}
+
+// Chaos returns a chaos engineering middleware that injects faults based on configuration
+func Chaos(chaosEngine chaos.ChaosEngine, logger *zap.Logger) MiddlewareFunc {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(ctx *fasthttp.RequestCtx) {
+			// Check if chaos engine is enabled
+			if chaosEngine == nil || !chaosEngine.IsEnabled() {
+				next(ctx)
+				return
+			}
+			
+			// Get the request path
+			path := string(ctx.Path())
+			
+			// Check if chaos should be applied to this endpoint
+			shouldApply, action := chaosEngine.ShouldApplyChaos(path)
+			if !shouldApply {
+				next(ctx)
+				return
+			}
+			
+			// Apply chaos
+			if err := chaosEngine.ApplyChaos(action, ctx); err != nil {
+				logger.Error("Failed to apply chaos",
+					zap.String("path", path),
+					zap.String("scenario", action.Scenario),
+					zap.String("type", action.Type),
+					zap.Error(err))
+				// Continue with normal request processing even if chaos fails
+				next(ctx)
+				return
+			}
+			
+			// If chaos injection was successful and it's an error injection,
+			// don't continue to the next handler as the response has been set
+			if action.Type == "error" {
+				logger.Debug("Chaos error injection applied, skipping normal handler",
+					zap.String("path", path),
+					zap.String("scenario", action.Scenario),
+					zap.Int("status", ctx.Response.StatusCode()))
+				return
+			}
+			
+			// For other types of chaos (like latency), continue with normal processing
+			next(ctx)
 		}
 	}
 }

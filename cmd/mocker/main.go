@@ -35,6 +35,7 @@ func main() {
 	// Add subcommands
 	rootCmd.AddCommand(newStartCommand(ctx, logger))
 	rootCmd.AddCommand(newConfigCommand(ctx, logger))
+	rootCmd.AddCommand(newChaosCommand(ctx, logger))
 	rootCmd.AddCommand(newVersionCommand(version, commit, buildTime))
 
 	// Execute the root command

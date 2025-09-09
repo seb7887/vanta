@@ -7,6 +7,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
+	"vanta/pkg/chaos"
 	"vanta/pkg/config"
 	"vanta/pkg/openapi"
 )
@@ -21,6 +22,7 @@ type Server struct {
 	spec             *openapi.Specification
 	generator        openapi.DataGenerator
 	metricsCollector *DefaultMetricsCollector
+	chaosEngine      chaos.ChaosEngine
 	
 	// Hot reload support
 	mu       sync.RWMutex
@@ -65,6 +67,16 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 		metricsCollector = NewDefaultMetricsCollector()
 	}
 
+	// Create chaos engine if enabled
+	var chaosEngine chaos.ChaosEngine
+	if cfg.Chaos.Enabled && len(cfg.Chaos.Scenarios) > 0 {
+		chaosEngine = chaos.NewDefaultChaosEngine(logger)
+		if err := chaosEngine.LoadScenarios(cfg.Chaos.Scenarios); err != nil {
+			logger.Warn("Failed to load chaos scenarios", zap.Error(err))
+			chaosEngine = nil
+		}
+	}
+
 	// Create and configure middleware stack
 	stack := NewStack()
 
@@ -86,6 +98,11 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 
 	if cfg.Middleware.Timeout.Enabled {
 		stack.Use(Timeout(&cfg.Middleware.Timeout))
+	}
+
+	// Add chaos middleware if enabled - place before metrics to capture chaos effects
+	if chaosEngine != nil {
+		stack.Use(Chaos(chaosEngine, logger))
 	}
 
 	if cfg.Metrics.Enabled && metricsCollector != nil {
@@ -123,6 +140,7 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 		spec:             spec,
 		generator:        generator,
 		metricsCollector: metricsCollector,
+		chaosEngine:      chaosEngine,
 	}, nil
 }
 

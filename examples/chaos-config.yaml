@@ -1,0 +1,83 @@
+# Example Chaos Testing Configuration
+# This file demonstrates how to configure chaos testing scenarios
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+# Chaos Testing Configuration
+chaos:
+  enabled: true
+  scenarios:
+    # Latency injection scenario
+    - name: "api_latency"
+      type: "latency"
+      endpoints:
+        - "/api/*"
+        - "/v1/*"
+      probability: 0.1  # 10% of requests
+      parameters:
+        min_delay: "10ms"
+        max_delay: "500ms"
+    
+    # Error injection for specific endpoints
+    - name: "service_errors"
+      type: "error"
+      endpoints:
+        - "/api/payments/*"
+        - "/api/orders/*"
+      probability: 0.05  # 5% of requests
+      parameters:
+        error_codes: [500, 502, 503]
+        custom_body: '{"error": "Service temporarily unavailable", "retry_after": 30}'
+    
+    # High latency for database operations
+    - name: "database_latency"
+      type: "latency"
+      endpoints:
+        - "/api/users/*"
+        - "/api/products/*"
+      probability: 0.15  # 15% of requests
+      parameters:
+        min_delay: "100ms"
+        max_delay: "2s"
+    
+    # Authentication errors
+    - name: "auth_errors"
+      type: "error"
+      endpoints:
+        - "/api/auth/*"
+        - "/api/login"
+      probability: 0.08  # 8% of requests
+      parameters:
+        error_codes: [401, 403]
+        custom_body: '{"error": "Authentication failed", "code": "AUTH_ERROR"}'
+    
+    # Network timeout simulation
+    - name: "timeout_simulation"
+      type: "latency"
+      endpoints:
+        - "/api/external/*"
+      probability: 0.03  # 3% of requests  
+      parameters:
+        min_delay: "5s"
+        max_delay: "10s"
+
+# Standard configuration
+logging:
+  level: "info"
+  format: "json"
+
+metrics:
+  enabled: true
+  port: 9090
+
+middleware:
+  request_id: true
+  recovery:
+    enabled: true
+    log_stack: true
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
