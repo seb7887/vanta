@@ -1,0 +1,237 @@
+# Example Plugin Configuration for Vanta OpenAPI Mocker
+# This file demonstrates the comprehensive plugin configuration system
+
+# Server configuration
+server:
+  port: 8080
+  host: "0.0.0.0"
+  
+# Plugin configurations
+plugins:
+  # Authentication Plugin - JWT and API Key support
+  - name: "auth"
+    enabled: true
+    config:
+      # JWT Configuration
+      jwt_secret: "${JWT_SECRET:your-very-long-secret-key-for-hmac-signing-security}"
+      jwt_method: "HS256"
+      jwt_issuer: "vanta-mocker"
+      jwt_audience: "api-clients"
+      
+      # API Key Configuration
+      api_keys:
+        "api-key-123": "user-1"
+        "api-key-456": "user-2"
+        "api-key-789": "admin-user"
+      
+      # Authentication Sources
+      auth_header: "Authorization"
+      auth_query: "api_key"
+      auth_cookie: "auth_token"
+      
+      # Public endpoints (no auth required)
+      public_endpoints:
+        - "/health"
+        - "/metrics"
+        - "/docs"
+        - "/swagger"
+
+  # Rate Limiting Plugin - Multi-tier rate limiting
+  - name: "rate_limit"
+    enabled: true
+    config:
+      # Global rate limiting
+      global_requests_per_second: 1000.0
+      global_burst: 2000
+      
+      # Per-IP rate limiting
+      ip_requests_per_second: 10.0
+      ip_burst: 20
+      
+      # Per-user rate limiting (for authenticated requests)
+      user_requests_per_second: 50.0
+      user_burst: 100
+      
+      # Exempt IPs from rate limiting
+      exempt_ips:
+        - "127.0.0.1"
+        - "192.168.1.0/24"
+      
+      # Cleanup configuration
+      cleanup_interval_seconds: 300  # 5 minutes
+      entry_ttl_seconds: 1800        # 30 minutes
+
+  # CORS Plugin - Enhanced CORS management
+  - name: "cors"
+    enabled: true
+    config:
+      # Allowed origins
+      allow_origins:
+        - "http://localhost:3000"
+        - "https://app.example.com"
+        - "https://*.example.com"
+      
+      # Allowed methods
+      allow_methods:
+        - "GET"
+        - "POST"
+        - "PUT"
+        - "DELETE"
+        - "OPTIONS"
+        - "HEAD"
+        - "PATCH"
+      
+      # Allowed headers
+      allow_headers:
+        - "Origin"
+        - "Content-Type"
+        - "Accept"
+        - "Authorization"
+        - "X-Requested-With"
+        - "X-API-Key"
+        - "X-Client-Version"
+      
+      # Headers to expose to the client
+      expose_headers:
+        - "X-RateLimit-Limit"
+        - "X-RateLimit-Remaining"
+        - "X-RateLimit-Reset"
+        - "X-Request-ID"
+      
+      # Allow credentials
+      allow_credentials: true
+      
+      # Preflight cache duration (24 hours)
+      max_age: 86400
+      
+      # Dynamic origin patterns (regex)
+      origin_patterns:
+        - "^https://[a-z0-9]+\\.example\\.com$"
+        - "^http://localhost:[0-9]+$"
+
+  # Logging Plugin - Structured request/response logging
+  - name: "logging"
+    enabled: true
+    config:
+      # Logging level
+      log_level: "info"
+      
+      # Body logging
+      log_request_body: false
+      log_response_body: false
+      max_body_size: 1048576  # 1MB
+      
+      # Sensitive data redaction
+      sensitive_headers:
+        - "authorization"
+        - "cookie"
+        - "x-api-key"
+        - "x-auth-token"
+        - "x-secret-key"
+      
+      sensitive_fields:
+        - "password"
+        - "secret"
+        - "token"
+        - "key"
+        - "credential"
+        - "auth"
+        - "bearer"
+      
+      # Output format
+      log_format: "json"
+      
+      # Include performance metrics
+      include_metrics: true
+
+# Additional configuration for development environment
+# Uncomment and modify as needed for different environments
+
+# Development environment with more permissive settings
+# plugins:
+#   - name: "auth"
+#     enabled: false  # Disable auth in development
+#     config: {}
+#   
+#   - name: "rate_limit"
+#     enabled: true
+#     config:
+#       ip_requests_per_second: 100.0  # Higher limits for development
+#       ip_burst: 200
+#   
+#   - name: "cors"
+#     enabled: true
+#     config:
+#       allow_origins: ["*"]  # Allow all origins in development
+#       allow_credentials: false
+#   
+#   - name: "logging"
+#     enabled: true
+#     config:
+#       log_level: "debug"
+#       log_request_body: true
+#       log_response_body: true
+#       max_body_size: 10240  # 10KB for development
+
+# Production environment with strict security
+# plugins:
+#   - name: "auth"
+#     enabled: true
+#     config:
+#       jwt_secret: "${JWT_SECRET}"  # Must be set via environment
+#       jwt_method: "RS256"          # Use RSA for production
+#       jwt_public_key: "${JWT_PUBLIC_KEY}"
+#       api_keys: {}                 # Managed externally
+#       public_endpoints: ["/health"]
+#   
+#   - name: "rate_limit"
+#     enabled: true
+#     config:
+#       global_requests_per_second: 500.0
+#       ip_requests_per_second: 5.0   # Strict IP limits
+#       user_requests_per_second: 20.0
+#       exempt_ips: []               # No exempt IPs in production
+#   
+#   - name: "cors"
+#     enabled: true
+#     config:
+#       allow_origins:
+#         - "https://app.production.com"
+#       allow_credentials: true
+#       max_age: 3600               # Shorter cache in production
+#   
+#   - name: "logging"
+#     enabled: true
+#     config:
+#       log_level: "warn"
+#       log_request_body: false
+#       log_response_body: false
+#       include_metrics: true
+
+# Environment Variables Used:
+# - JWT_SECRET: Secret key for JWT signing (required for HMAC methods)
+# - JWT_PUBLIC_KEY: Public key for JWT verification (required for RSA methods)
+# 
+# Example:
+# export JWT_SECRET="your-very-long-secret-key-that-should-be-at-least-32-characters-long-for-security"
+# export JWT_PUBLIC_KEY="$(cat /path/to/public.pem)"
+
+# Plugin Configuration Validation:
+# All plugin configurations are validated against JSON schemas with:
+# - Type checking (string, number, boolean, array, object)
+# - Range validation (min/max values, lengths)
+# - Pattern matching (regex for strings)
+# - Enum validation (predefined values)
+# - Custom business logic validation
+# - Environment variable substitution
+# 
+# Hot Reload Support:
+# Most configuration changes can be applied without restarting:
+# - Auth: API keys, public endpoints, headers (not JWT method/keys)
+# - Rate Limit: All rate limits and cleanup settings
+# - CORS: All CORS settings
+# - Logging: All logging settings
+# 
+# Configuration Versioning:
+# The configuration system supports versioning and migrations
+# for backward compatibility and smooth upgrades.

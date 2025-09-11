@@ -6,12 +6,14 @@ require (
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/getkin/kin-openapi v0.120.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.4.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	github.com/valyala/fasthttp v1.51.0
 	go.uber.org/zap v1.26.0
+	golang.org/x/time v0.13.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
