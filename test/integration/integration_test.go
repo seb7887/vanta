@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"vanta/pkg/config"
-	"vanta/pkg/plugins"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/plugins"
 )
 
 // TestPluginConfigurationSystemIntegration tests the complete plugin configuration system

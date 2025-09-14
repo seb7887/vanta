@@ -2,7 +2,7 @@ package chaos
 
 import (
 	"time"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 	"github.com/valyala/fasthttp"
 )
 

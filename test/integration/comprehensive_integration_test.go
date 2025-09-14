@@ -13,10 +13,10 @@ import (
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
-	"vanta/pkg/api"
-	"vanta/pkg/config"
-	"vanta/pkg/openapi"
-	"vanta/pkg/plugins"
+	"github.com/seb7887/vanta/pkg/api"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/plugins"
 )
 
 // TestPluginSystemServerIntegration tests the complete plugin system integration with the server

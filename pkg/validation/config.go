@@ -2,7 +2,7 @@ package validation
 
 import (
     "time"
-    "vanta/pkg/openapi"
+    "github.com/seb7887/vanta/pkg/openapi"
 )
 
 // Config holds validation configuration

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 // ConfigVersion represents the version of the plugin configuration schema

@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"vanta/pkg/chaos"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/chaos"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 // newChaosCommand creates the chaos testing command and its subcommands

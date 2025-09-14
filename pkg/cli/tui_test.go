@@ -6,9 +6,9 @@ import (
 
 	"github.com/charmbracelet/bubbletea"
 	"go.uber.org/zap/zaptest"
-	"vanta/pkg/api"
-	"vanta/pkg/config"
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/api"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 func TestNewTUIModel(t *testing.T) {

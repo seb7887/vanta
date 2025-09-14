@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"vanta/pkg/cli"
+	"github.com/seb7887/vanta/pkg/cli"
 )
 
 var (

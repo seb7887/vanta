@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"vanta/pkg/openapi"
-	"vanta/pkg/validation"
+	"github.com/seb7887/vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/validation"
 )
 
 func newValidationCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {

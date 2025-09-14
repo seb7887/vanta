@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
-	"vanta/pkg/state"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/state"
 )
 
 func newStateCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {

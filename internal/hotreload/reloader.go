@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"vanta/pkg/config"
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 // ServerInterface defines the interface that a server must implement for hot reload

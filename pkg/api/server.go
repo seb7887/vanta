@@ -7,11 +7,11 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/chaos"
-	"vanta/pkg/config"
-	"vanta/pkg/openapi"
-	"vanta/pkg/plugins"
-	"vanta/pkg/recorder"
+	"github.com/seb7887/vanta/pkg/chaos"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/plugins"
+	"github.com/seb7887/vanta/pkg/recorder"
 )
 
 // Server represents the HTTP server

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 func TestPluginManager_Basic(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 // MockHandler handles requests by generating mock responses based on OpenAPI specification

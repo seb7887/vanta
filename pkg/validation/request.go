@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 type RequestValidator struct {

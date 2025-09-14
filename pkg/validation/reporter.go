@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 type Reporter struct {

@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 // RecordingEngine defines the interface for the recording system

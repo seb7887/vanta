@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 func main() {

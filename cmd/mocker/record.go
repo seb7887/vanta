@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
-	"vanta/pkg/recorder"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/recorder"
 )
 
 // newRecordCommand creates the record command with subcommands

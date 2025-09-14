@@ -16,11 +16,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/chaos"
-	"vanta/pkg/config"
-	"vanta/pkg/recorder"
-	"vanta/pkg/state"
-	"vanta/pkg/validation"
+	"github.com/seb7887/vanta/pkg/chaos"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/recorder"
+	"github.com/seb7887/vanta/pkg/state"
+	"github.com/seb7887/vanta/pkg/validation"
 )
 
 // MiddlewareFunc is the type of function for FastHTTP middleware

@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"go.uber.org/zap"
-	"vanta/pkg/config"
-	"vanta/pkg/plugins"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/plugins"
 )
 
 func main() {

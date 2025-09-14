@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 func newConfigCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {

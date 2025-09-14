@@ -12,8 +12,8 @@ import (
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"go.uber.org/zap"
-	"vanta/pkg/api"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/api"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 const (

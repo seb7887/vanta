@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"vanta/pkg/plugins"
+	"github.com/seb7887/vanta/pkg/plugins"
 )
 
 func main() {

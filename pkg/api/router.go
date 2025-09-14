@@ -7,7 +7,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 // Router handles HTTP routing and dispatching

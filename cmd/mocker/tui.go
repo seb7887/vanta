@@ -7,10 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"vanta/pkg/api"
-	"vanta/pkg/cli"
-	"vanta/pkg/config"
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/pkg/api"
+	"github.com/seb7887/vanta/pkg/cli"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 // newTUICommand creates the tui command

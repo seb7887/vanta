@@ -15,7 +15,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 // Test helpers

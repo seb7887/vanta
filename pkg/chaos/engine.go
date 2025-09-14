@@ -10,7 +10,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 // DefaultChaosEngine is the default implementation of ChaosEngine

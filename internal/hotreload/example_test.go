@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"go.uber.org/zap/zaptest"
-	"vanta/internal/hotreload"
-	"vanta/pkg/api"
-	"vanta/pkg/config"
-	"vanta/pkg/openapi"
+	"github.com/seb7887/vanta/internal/hotreload"
+	"github.com/seb7887/vanta/pkg/api"
+	"github.com/seb7887/vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/openapi"
 )
 
 // TestHotReloadIntegration tests the complete hot reload system

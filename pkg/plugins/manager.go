@@ -10,7 +10,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/config"
+	"github.com/seb7887/vanta/pkg/config"
 )
 
 // PluginState represents the current state of a plugin

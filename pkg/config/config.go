@@ -3,8 +3,8 @@ package config
 import (
     "time"
 
-    "vanta/pkg/state"
-    "vanta/pkg/validation"
+    "github.com/seb7887/vanta/pkg/state"
+    "github.com/seb7887/vanta/pkg/validation"
 )
 
 // Config represents the complete configuration structure
