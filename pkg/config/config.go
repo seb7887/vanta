@@ -1,10 +1,10 @@
 package config
 
 import (
-	"time"
+    "time"
 
-	"github.com/vanta/pkg/state"
-	"github.com/vanta/pkg/validation"
+    "vanta/pkg/state"
+    "vanta/pkg/validation"
 )
 
 // Config represents the complete configuration structure

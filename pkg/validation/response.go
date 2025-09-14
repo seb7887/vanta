@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vanta/pkg/openapi"
+	"vanta/pkg/openapi"
 )
 
 type ResponseValidator struct {

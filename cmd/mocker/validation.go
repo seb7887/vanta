@@ -10,9 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"github.com/vanta/pkg/config"
-	"github.com/vanta/pkg/openapi"
-	"github.com/vanta/pkg/validation"
+	"vanta/pkg/openapi"
+	"vanta/pkg/validation"
 )
 
 func newValidationCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
@@ -52,7 +51,7 @@ func newValidateSpecCommand(ctx context.Context, logger *zap.Logger, configFile 
 			specFile := args[0]
 
 			// Load and parse OpenAPI specification
-			spec, err := loadOpenAPISpec(specFile)
+			spec, err := loadOpenAPISpec(specFile, logger)
 			if err != nil {
 				return fmt.Errorf("failed to load OpenAPI spec: %w", err)
 			}
@@ -67,8 +66,8 @@ func newValidateSpecCommand(ctx context.Context, logger *zap.Logger, configFile 
 			validationCfg := cfg.Validation.ToValidationConfig()
 			validationCfg.StrictMode = strict
 
-			// Create validation manager
-			validationManager := validation.NewValidationManager(spec, validationCfg)
+			// Create validation manager (not used directly here, but ensures setup)
+			_ = validation.NewValidationManager(spec, validationCfg)
 
 			// Perform validation
 			result := validateSpecification(spec, validationCfg, examples)
@@ -137,7 +136,7 @@ func newValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configF
 			specFile := args[0]
 
 			// Load and parse OpenAPI specification
-			spec, err := loadOpenAPISpec(specFile)
+			spec, err := loadOpenAPISpec(specFile, logger)
 			if err != nil {
 				return fmt.Errorf("failed to load OpenAPI spec: %w", err)
 			}
@@ -160,7 +159,6 @@ func newValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configF
 
 			// Format output based on requested format
 			var outputData []byte
-			var err error
 
 			switch format {
 			case "json":
@@ -230,7 +228,7 @@ func newValidateComplianceCommand(ctx context.Context, logger *zap.Logger, confi
 			specFile := args[0]
 
 			// Load and parse OpenAPI specification
-			spec, err := loadOpenAPISpec(specFile)
+			spec, err := loadOpenAPISpec(specFile, logger)
 			if err != nil {
 				return fmt.Errorf("failed to load OpenAPI spec: %w", err)
 			}
@@ -253,7 +251,6 @@ func newValidateComplianceCommand(ctx context.Context, logger *zap.Logger, confi
 
 			// Format output based on requested format
 			var outputData []byte
-			var err error
 
 			switch format {
 			case "json":
@@ -308,20 +305,6 @@ func newValidateComplianceCommand(ctx context.Context, logger *zap.Logger, confi
 }
 
 // Helper functions
-
-func loadOpenAPISpec(filename string) (*openapi.Specification, error) {
-	// This would typically parse the OpenAPI file using the openapi package
-	// For now, return a placeholder
-	return &openapi.Specification{
-		Version: "3.0.0",
-		Info: openapi.InfoObject{
-			Title:   "Mock API",
-			Version: "1.0.0",
-		},
-		Paths:   make(map[string]openapi.PathItem),
-		Schemas: make(map[string]*openapi.Schema),
-	}, nil
-}
 
 type SpecValidationResult struct {
 	Valid      bool     `json:"valid"`

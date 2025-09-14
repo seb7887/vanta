@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vanta/pkg/config"
-	"github.com/vanta/pkg/openapi"
-	"github.com/vanta/pkg/state"
-	"github.com/vanta/pkg/validation"
+	"vanta/pkg/config"
+	"vanta/pkg/openapi"
+	"vanta/pkg/state"
+	"vanta/pkg/validation"
 )
 
 // TestStateAndValidationIntegration tests the integration between state management and validation

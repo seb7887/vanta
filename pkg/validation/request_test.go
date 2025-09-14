@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/vanta/pkg/openapi"
+	"vanta/pkg/openapi"
 )
 
 func TestRequestValidator_ValidateRequest(t *testing.T) {

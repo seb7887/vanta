@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/vanta/pkg/openapi"
+	"vanta/pkg/openapi"
 )
 
 type Reporter struct {
@@ -272,9 +272,9 @@ func (r *Reporter) GenerateCoverageReport(spec *openapi.Specification) *Coverage
 		},
 	}
 
-	// Count total endpoints from specification
-	totalEndpoints := 0
-	for path, pathItem := range spec.Paths {
+    // Count total endpoints from specification
+    totalEndpoints := 0
+    for _, pathItem := range spec.Paths {
 		if pathItem.GET != nil {
 			totalEndpoints++
 		}

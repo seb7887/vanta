@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/vanta/pkg/openapi"
+	"vanta/pkg/openapi"
 )
 
 type RequestValidator struct {

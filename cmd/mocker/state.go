@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"github.com/vanta/pkg/config"
-	"github.com/vanta/pkg/state"
+	"vanta/pkg/config"
+	"vanta/pkg/state"
 )
 
 func newStateCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
@@ -55,7 +55,7 @@ func newStateGetCommand(ctx context.Context, logger *zap.Logger, configFile *str
 			key := args[0]
 
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -137,7 +137,7 @@ func newStateSetCommand(ctx context.Context, logger *zap.Logger, configFile *str
 			key := args[0]
 
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -217,7 +217,7 @@ func newStateDeleteCommand(ctx context.Context, logger *zap.Logger, configFile *
 			key := args[0]
 
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -276,7 +276,7 @@ func newStateClearCommand(ctx context.Context, logger *zap.Logger, configFile *s
 			}
 
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -326,7 +326,7 @@ func newStateListCommand(ctx context.Context, logger *zap.Logger, configFile *st
 		Long:  "Show all keys currently stored in the mock server's state",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -413,7 +413,7 @@ func newStateExportCommand(ctx context.Context, logger *zap.Logger, configFile *
 		Long:  "Export the complete state storage to a JSON file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -479,7 +479,7 @@ func newStateImportCommand(ctx context.Context, logger *zap.Logger, configFile *
 			filename := args[0]
 
 			// Load configuration
-			cfg, err := loadConfig(*configFile)
+			cfg, err := loadStateConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
@@ -533,7 +533,7 @@ func newStateImportCommand(ctx context.Context, logger *zap.Logger, configFile *
 }
 
 // Helper function to load configuration (reused from other commands)
-func loadConfig(configFile string) (*config.Config, error) {
+func loadStateConfig(configFile string) (*config.Config, error) {
 	if configFile == "" {
 		configFile = "mocker.yaml"
 	}
