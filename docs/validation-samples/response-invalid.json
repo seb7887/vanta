@@ -1,0 +1,7 @@
+{
+  "valid": true,
+  "status_code": 200,
+  "warnings": [
+    { "location": "body", "path": "$.items[0].status", "message": "value not in enum [available,pending,sold]" }
+  ]
+}

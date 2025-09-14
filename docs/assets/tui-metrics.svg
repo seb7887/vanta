@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="520" viewBox="0 0 920 520">
+  <rect width="100%" height="100%" fill="#0b1220"/>
+  <text x="40" y="60" font-family="monospace" font-size="28" fill="#9bd">Vanta TUI — Metrics</text>
+  <rect x="40" y="80" width="840" height="380" rx="8" fill="#121a2b" stroke="#24324a"/>
+  <text x="60" y="120" font-family="monospace" font-size="18" fill="#bcd">RPS: 128.4    P95: 42.3ms    Errors: 0.3%</text>
+  <text x="60" y="160" font-family="monospace" font-size="16" fill="#9bd">/pets         GET   200  ████████  14.2ms</text>
+  <text x="60" y="190" font-family="monospace" font-size="16" fill="#9bd">/pets/{id}    GET   200  ██████    18.7ms</text>
+  <text x="60" y="220" font-family="monospace" font-size="16" fill="#9bd">/orders       POST  201  █████████ 22.1ms</text>
+  <text x="60" y="260" font-family="monospace" font-size="14" fill="#7aa">Tip: Tab/Shift+Tab to switch panels</text>
+  <text x="60" y="290" font-family="monospace" font-size="14" fill="#7aa">Ctrl+C or q to quit</text>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "valid": false,
+  "errors": [
+    {
+      "location": "body",
+      "path": "$.name",
+      "message": "required field missing"
+    }
+  ],
+  "warnings": [
+    { "location": "query", "path": "?limit", "message": "unknown parameter" }
+  ],
+  "request_id": "7c1f1e4c-8e9a-4f1e-9b2b-1a9e5f2c9f2a"
+}

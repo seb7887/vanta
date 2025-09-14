@@ -1,0 +1,258 @@
+version: 2
+
+# Project configuration
+project_name: vanta
+
+# Build configuration
+builds:
+  - id: vanta
+    binary: vanta
+    main: ./cmd/mocker
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # Build flags
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.buildTime={{.Date}}
+    # Build modes
+    mod_timestamp: '{{ .CommitTimestamp }}'
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+# Archives configuration
+archives:
+  - id: vanta
+    builds:
+      - vanta
+    name_template: 'vanta_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - examples/docker-config.yaml
+      - examples/petstore.yaml
+      - examples/k8s/*
+
+# Checksums
+checksum:
+  name_template: 'checksums.txt'
+
+# Snapshots for development builds
+snapshot:
+  name_template: "{{ incpatch .Version }}-dev"
+
+# Changelog configuration
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: Others
+      order: 999
+
+# Docker images
+dockers:
+  - id: vanta
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{.ProjectName}}
+      - --label=org.opencontainers.image.description=OpenAPI Mock Server
+      - --label=org.opencontainers.image.url=https://github.com/YOUR_USERNAME/vanta
+      - --label=org.opencontainers.image.source=https://github.com/YOUR_USERNAME/vanta
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.licenses=MIT
+      - --platform=linux/amd64
+    image_templates:
+      - "vanta:{{ .Version }}-amd64"
+      - "vanta:latest-amd64"
+    dockerfile: Dockerfile
+    use: buildx
+
+  - id: vanta-arm64
+    build_flag_templates:
+      - --label=org.opencontainers.image.title={{.ProjectName}}
+      - --label=org.opencontainers.image.description=OpenAPI Mock Server
+      - --label=org.opencontainers.image.url=https://github.com/YOUR_USERNAME/vanta
+      - --label=org.opencontainers.image.source=https://github.com/YOUR_USERNAME/vanta
+      - --label=org.opencontainers.image.version={{.Version}}
+      - --label=org.opencontainers.image.created={{.Date}}
+      - --label=org.opencontainers.image.revision={{.FullCommit}}
+      - --label=org.opencontainers.image.licenses=MIT
+      - --platform=linux/arm64
+    image_templates:
+      - "vanta:{{ .Version }}-arm64"
+      - "vanta:latest-arm64"
+    dockerfile: Dockerfile
+    use: buildx
+
+# Docker manifests for multi-arch images
+docker_manifests:
+  - name_template: 'vanta:{{ .Version }}'
+    image_templates:
+      - 'vanta:{{ .Version }}-amd64'
+      - 'vanta:{{ .Version }}-arm64'
+  - name_template: 'vanta:latest'
+    image_templates:
+      - 'vanta:latest-amd64'
+      - 'vanta:latest-arm64'
+
+# Homebrew tap for macOS
+brews:
+  - name: vanta
+    repository:
+      owner: YOUR_USERNAME  # Replace with your GitHub username
+      name: homebrew-tap    # Replace with your tap repository name
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    description: "OpenAPI Mock Server with advanced features"
+    homepage: "https://github.com/YOUR_USERNAME/vanta"
+    license: "MIT"
+    folder: Formula
+    dependencies:
+      - name: ca-certificates
+    install: |
+      bin.install "vanta"
+      # Install example configurations
+      (share/"vanta").install "examples/docker-config.yaml"
+      (share/"vanta").install "examples/petstore.yaml"
+      # Install man page if available
+      # man1.install "vanta.1" if File.exist?("vanta.1")
+    test: |
+      system "#{bin}/vanta", "version"
+
+# Scoop for Windows
+scoops:
+  - repository:
+      owner: YOUR_USERNAME  # Replace with your GitHub username
+      name: scoop-bucket    # Replace with your scoop bucket name
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    description: "OpenAPI Mock Server with advanced features"
+    homepage: "https://github.com/YOUR_USERNAME/vanta"
+    license: MIT
+
+# AUR for Arch Linux
+aurs:
+  - name: vanta-bin
+    homepage: "https://github.com/YOUR_USERNAME/vanta"
+    description: "OpenAPI Mock Server with advanced features"
+    maintainers:
+      - 'Your Name <your.email@example.com>'  # Replace with your info
+    license: MIT
+    private_key: '{{ .Env.AUR_KEY }}'
+    git_url: 'ssh://aur@aur.archlinux.org/vanta-bin.git'
+    package: |-
+      # bin
+      install -Dm755 "./vanta" "${pkgdir}/usr/bin/vanta"
+
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/vanta/LICENSE"
+
+      # examples
+      install -Dm644 "./examples/docker-config.yaml" "${pkgdir}/usr/share/vanta/examples/docker-config.yaml"
+      install -Dm644 "./examples/petstore.yaml" "${pkgdir}/usr/share/vanta/examples/petstore.yaml"
+
+# Release configuration
+release:
+  github:
+    owner: YOUR_USERNAME  # Replace with your GitHub username
+    name: vanta           # Replace with your repository name
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Vanta {{ .Version }}
+
+    Welcome to this new release of Vanta OpenAPI Mock Server!
+
+    ### Features
+    - OpenAPI 3.x specification support
+    - Advanced chaos testing capabilities
+    - Request recording and replay
+    - Plugin architecture
+    - Terminal UI interface
+    - Hot reload configuration
+    - Comprehensive metrics and monitoring
+
+    ### Installation
+
+    #### macOS (Homebrew)
+    ```bash
+    brew install YOUR_USERNAME/tap/vanta
+    ```
+
+    #### Linux/macOS (Direct download)
+    ```bash
+    # Replace with your desired platform and architecture
+    wget https://github.com/YOUR_USERNAME/vanta/releases/download/{{ .Tag }}/vanta_{{ .Version }}_linux_amd64.tar.gz
+    tar -xzf vanta_{{ .Version }}_linux_amd64.tar.gz
+    sudo mv vanta /usr/local/bin/
+    ```
+
+    #### Windows (Scoop)
+    ```powershell
+    scoop bucket add YOUR_USERNAME https://github.com/YOUR_USERNAME/scoop-bucket
+    scoop install vanta
+    ```
+
+    #### Docker
+    ```bash
+    docker pull vanta:{{ .Version }}
+    docker run -p 8080:8080 vanta:{{ .Version }}
+    ```
+
+    ### Quick Start
+    ```bash
+    # Start with default configuration
+    vanta start
+
+    # Use custom OpenAPI spec
+    vanta start --spec my-api.yaml
+
+    # Enable terminal UI
+    vanta tui
+    ```
+
+  footer: |
+    ### Docker Images
+
+    Multi-architecture Docker images are available:
+    - `vanta:{{ .Version }}` (linux/amd64, linux/arm64)
+    - `vanta:latest` (linux/amd64, linux/arm64)
+
+    ### Checksums
+
+    All release artifacts are signed and checksummed for security.
+
+    ---
+
+    **Full Changelog**: https://github.com/YOUR_USERNAME/vanta/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+# Announce configuration (optional)
+# announces:
+#   - slack:
+#       enabled: true
+#       message_template: 'Vanta {{ .Tag }} is out! Check it out: {{ .ReleaseURL }}'

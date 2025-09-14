@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  host: 0.0.0.0
+
+mock:
+  prefer_examples: true
+
+middleware:
+  request_id: true
+  recovery:
+    enabled: true
+  cors:
+    enabled: true
+    allow_origins: ["*"]
+
+metrics:
+  enabled: true
+  port: 9090

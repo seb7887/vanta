@@ -1,0 +1,69 @@
+# Docker-optimized configuration for vanta OpenAPI Mocker
+# Designed for containerized environments with health checks and monitoring
+
+server:
+  host: "0.0.0.0"          # Listen on all interfaces in container
+  port: 8080               # Standard container port
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+  max_header_size: 8192
+
+# OpenAPI specification
+spec_path: "/app/examples/petstore.yaml"  # Default spec for demo
+
+# Hot reload disabled in production container
+hot_reload:
+  enabled: false
+
+# Logging optimized for container stdout
+logging:
+  level: "info"
+  format: "json"           # Structured logging for container logs
+  output: "stdout"
+
+# Metrics enabled for monitoring
+metrics:
+  enabled: true
+  path: "/metrics"
+
+# Health check endpoint
+health:
+  enabled: true
+  path: "/health"
+
+# CORS for container deployments
+cors:
+  enabled: true
+  allowed_origins: ["*"]
+  allowed_methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+  allowed_headers: ["*"]
+  exposed_headers: ["*"]
+  allow_credentials: false
+  max_age: 86400
+
+# Chaos testing disabled by default in containers
+chaos:
+  enabled: false
+
+# Recording disabled by default in containers
+recording:
+  enabled: false
+
+# Plugins configuration for container deployment
+plugins:
+  enabled: true
+  builtin:
+    logging:
+      enabled: true
+      level: "info"
+    cors:
+      enabled: true
+    rate_limit:
+      enabled: false  # Disabled by default, enable per deployment needs
+    auth:
+      enabled: false  # Disabled by default, configure per security needs
+
+# TUI disabled in container
+tui:
+  enabled: false

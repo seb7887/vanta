@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vanta
+  labels:
+    app: vanta
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vanta
+  template:
+    metadata:
+      labels:
+        app: vanta
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: vanta
+        image: vanta:latest  # Replace with your actual image
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+
+        # Environment variables
+        env:
+        - name: PORT
+          value: "8080"
+        - name: LOG_LEVEL
+          value: "info"
+
+        # Resource limits and requests
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        # Volume mounts
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+        - name: spec
+          mountPath: /app/spec
+          readOnly: true
+
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1001
+          runAsGroup: 1001
+          capabilities:
+            drop:
+            - ALL
+
+        # Command override to use mounted config
+        command: ["./vanta"]
+        args:
+        - "start"
+        - "--config"
+        - "/app/config/config.yaml"
+        - "--spec"
+        - "/app/spec/petstore.yaml"
+
+      # Security context for the pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      # Volumes
+      volumes:
+      - name: config
+        configMap:
+          name: vanta-config
+          items:
+          - key: config.yaml
+            path: config.yaml
+      - name: spec
+        configMap:
+          name: vanta-spec
+          items:
+          - key: petstore.yaml
+            path: petstore.yaml
+
+      # Restart policy
+      restartPolicy: Always
+
+      # DNS policy
+      dnsPolicy: ClusterFirst
+
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: vanta-pdb
+  labels:
+    app: vanta
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: vanta

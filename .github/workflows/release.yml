@@ -1,0 +1,262 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release'
+        required: true
+        type: string
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Run tests
+      run: go test -race -coverprofile=coverage.out ./...
+
+    - name: Run benchmarks
+      run: go test -bench=. -benchmem ./test/benchmarks/... || true
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Run Gosec Security Scanner
+      uses: securecodewarrior/github-action-gosec@master
+      with:
+        args: './...'
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Build binary
+      run: go build -o vanta ./cmd/mocker
+
+    - name: Start vanta in background
+      run: |
+        ./vanta start --config examples/docker-config.yaml --spec examples/petstore.yaml &
+        echo $! > vanta.pid
+
+    - name: Wait for service to be ready
+      run: |
+        for i in {1..30}; do
+          if curl -f http://localhost:8080/health; then
+            echo "Service is ready"
+            break
+          fi
+          echo "Waiting for service to start... ($i/30)"
+          sleep 2
+        done
+
+    - name: Test API endpoints
+      run: |
+        # Test health endpoint
+        curl -f http://localhost:8080/health
+
+        # Test pets endpoint
+        curl -f http://localhost:8080/pets
+
+        # Test metrics endpoint
+        curl -f http://localhost:8080/metrics
+
+    - name: Test chaos functionality
+      run: |
+        # Enable chaos testing
+        ./vanta chaos start --config examples/chaos-config.yaml --scenario latency_test &
+        sleep 5
+
+        # Test with chaos enabled
+        response_time=$(curl -w "%{time_total}" -o /dev/null -s http://localhost:8080/pets)
+        echo "Response time with chaos: ${response_time}s"
+
+        # Stop chaos testing
+        ./vanta chaos stop
+
+    - name: Stop vanta
+      run: |
+        if [ -f vanta.pid ]; then
+          kill $(cat vanta.pid) || true
+          rm vanta.pid
+        fi
+
+  docker-test:
+    name: Docker Test
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: vanta:test
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Docker image
+      run: |
+        # Start container in background
+        docker run -d --name vanta-test -p 8080:8080 vanta:test
+
+        # Wait for container to be ready
+        for i in {1..30}; do
+          if curl -f http://localhost:8080/health; then
+            echo "Container is ready"
+            break
+          fi
+          echo "Waiting for container to start... ($i/30)"
+          sleep 2
+        done
+
+        # Test API endpoints
+        curl -f http://localhost:8080/health
+        curl -f http://localhost:8080/pets
+
+        # Stop container
+        docker stop vanta-test
+        docker rm vanta-test
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [test, lint, integration-test, docker-test, security]
+    permissions:
+      contents: write
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Login to GitHub Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [release]
+    if: success()
+    steps:
+    - name: Get release info
+      id: release
+      run: |
+        echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "repo=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
+
+    - name: Notify Slack (Optional)
+      if: vars.SLACK_WEBHOOK_URL != ''
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: |
+          🎉 Vanta ${{ steps.release.outputs.tag }} has been released!
+
+          📦 Download: https://github.com/${{ steps.release.outputs.repo }}/releases/tag/${{ steps.release.outputs.tag }}
+          🐳 Docker: `docker pull vanta:${{ steps.release.outputs.tag }}`
+          🍺 Homebrew: `brew install YOUR_USERNAME/tap/vanta`
+      env:
+        SLACK_WEBHOOK_URL: ${{ vars.SLACK_WEBHOOK_URL }}

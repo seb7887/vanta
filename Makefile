@@ -1,4 +1,4 @@
-.PHONY: build test clean install lint fmt vet benchmark coverage deps-update
+.PHONY: build build-all build-dev build-release test clean install lint fmt vet benchmark coverage deps-update docker release-dry release-patch release-minor release-major
 
 # Build configuration
 BUILD_TIME := $(shell date -u '+%Y-%m-%d_%H:%M:%S')
@@ -16,11 +16,17 @@ build:
 	@echo "Building vanta..."
 	@go build -ldflags="$(LDFLAGS)" -o bin/vanta ./cmd/mocker
 
-build-all: 
+build-dev:
+	@echo "Building for development..."
+	@./scripts/build.sh dev
+
+build-all:
 	@echo "Building for all platforms..."
-	@GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o bin/vanta-linux-amd64 ./cmd/mocker
-	@GOOS=darwin GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o bin/vanta-darwin-amd64 ./cmd/mocker
-	@GOOS=windows GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -o bin/vanta-windows-amd64.exe ./cmd/mocker
+	@./scripts/build.sh all
+
+build-release:
+	@echo "Building release packages..."
+	@./scripts/build.sh release
 
 test:
 	@echo "Running tests..."
@@ -36,7 +42,8 @@ coverage: test
 
 clean:
 	@echo "Cleaning build artifacts..."
-	@rm -rf bin/ coverage.out coverage.html
+	@rm -rf bin/ build/ coverage.out coverage.html
+	@./scripts/build.sh clean
 
 install: build
 	@echo "Installing vanta..."
@@ -62,5 +69,52 @@ vet:
 dev: fmt vet lint test build
 	@echo "Development build complete"
 
+# Docker targets
+docker:
+	@echo "Building Docker image..."
+	@./scripts/build.sh docker
+
+# Release targets
+release-dry:
+	@echo "Dry run release (patch)..."
+	@./scripts/release.sh dry-run patch
+
+release-patch:
+	@echo "Creating patch release..."
+	@./scripts/release.sh patch
+
+release-minor:
+	@echo "Creating minor release..."
+	@./scripts/release.sh minor
+
+release-major:
+	@echo "Creating major release..."
+	@./scripts/release.sh major
+
 ci: deps-update dev benchmark
 	@echo "CI build complete"
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  build          - Build for current platform"
+	@echo "  build-dev      - Development build using scripts/build.sh"
+	@echo "  build-all      - Build for all supported platforms"
+	@echo "  build-release  - Build release packages with checksums"
+	@echo "  test           - Run tests with coverage"
+	@echo "  benchmark      - Run benchmarks"
+	@echo "  coverage       - Generate HTML coverage report"
+	@echo "  clean          - Clean build artifacts"
+	@echo "  install        - Install binary locally"
+	@echo "  deps-update    - Update dependencies"
+	@echo "  lint           - Run linter"
+	@echo "  fmt            - Format code"
+	@echo "  vet            - Run go vet"
+	@echo "  docker         - Build Docker image"
+	@echo "  release-dry    - Show what patch release would do"
+	@echo "  release-patch  - Create patch release"
+	@echo "  release-minor  - Create minor release"
+	@echo "  release-major  - Create major release"
+	@echo "  dev            - Development build (fmt + vet + lint + test + build)"
+	@echo "  ci             - CI build (deps-update + dev + benchmark)"
+	@echo "  help           - Show this help"
