@@ -2,19 +2,24 @@ package config
 
 import (
 	"time"
+
+	"github.com/vanta/pkg/state"
+	"github.com/vanta/pkg/validation"
 )
 
 // Config represents the complete configuration structure
 type Config struct {
-	Server     ServerConfig     `yaml:"server"`
-	Mock       MockConfig       `yaml:"mock"`
-	Chaos      ChaosConfig      `yaml:"chaos"`
-	Recording  RecordingConfig  `yaml:"recording"`
-	Plugins    []PluginConfig   `yaml:"plugins"`
-	Logging    LoggingConfig    `yaml:"logging"`
-	Metrics    MetricsConfig    `yaml:"metrics"`
-	Middleware MiddlewareConfig `yaml:"middleware"`
-	HotReload  HotReloadConfig  `yaml:"hotreload"`
+	Server     ServerConfig            `yaml:"server"`
+	Mock       MockConfig              `yaml:"mock"`
+	Chaos      ChaosConfig             `yaml:"chaos"`
+	Recording  RecordingConfig         `yaml:"recording"`
+	Plugins    []PluginConfig          `yaml:"plugins"`
+	Logging    LoggingConfig           `yaml:"logging"`
+	Metrics    MetricsConfig           `yaml:"metrics"`
+	Middleware MiddlewareConfig        `yaml:"middleware"`
+	HotReload  HotReloadConfig         `yaml:"hotreload"`
+	State      StateConfig             `yaml:"state"`
+	Validation ValidationConfigWrapper `yaml:"validation"`
 }
 
 // ServerConfig holds HTTP server configuration
@@ -139,4 +144,93 @@ type RecordingFilter struct {
 	Type   string   `yaml:"type"`   // "endpoint", "method", "status"
 	Values []string `yaml:"values"`
 	Negate bool     `yaml:"negate"` // Exclude instead of include
+}
+
+// StateConfig holds state management configuration
+type StateConfig struct {
+	Enabled         bool                    `yaml:"enabled"`
+	CleanupInterval time.Duration           `yaml:"cleanup_interval"`
+	DefaultTTL      time.Duration           `yaml:"default_ttl"`
+	Storage         StateStorageConfig      `yaml:"storage"`
+	Context         StateContextConfig      `yaml:"context"`
+	Endpoints       map[string]EndpointStateConfig `yaml:"endpoints"`
+}
+
+// StateStorageConfig defines state storage configuration
+type StateStorageConfig struct {
+	Type     string            `yaml:"type"`      // "memory", "file"
+	FilePath string            `yaml:"file_path"` // For file storage
+	Options  map[string]string `yaml:"options"`
+}
+
+// StateContextConfig defines context management configuration
+type StateContextConfig struct {
+	DefaultTTL      time.Duration `yaml:"default_ttl"`
+	SessionTTL      time.Duration `yaml:"session_ttl"`
+	RequestTTL      time.Duration `yaml:"request_ttl"`
+	CleanupInterval time.Duration `yaml:"cleanup_interval"`
+}
+
+// EndpointStateConfig defines per-endpoint state configuration
+type EndpointStateConfig struct {
+	InitialState   map[string]interface{} `yaml:"initial_state"`
+	SharedContext  string                 `yaml:"shared_context"`
+	TTL            time.Duration          `yaml:"ttl"`
+	Persistent     bool                   `yaml:"persistent"`
+}
+
+// ValidationConfigWrapper wraps the validation configuration to avoid import cycles
+type ValidationConfigWrapper struct {
+	Enabled              bool          `yaml:"enabled"`
+	StrictMode           bool          `yaml:"strict_mode"`
+	FailOnInvalid        bool          `yaml:"fail_on_invalid"`
+	ValidateHeaders      bool          `yaml:"validate_headers"`
+	ValidateQuery        bool          `yaml:"validate_query"`
+	ValidatePath         bool          `yaml:"validate_path"`
+	ValidateBody         bool          `yaml:"validate_body"`
+	ValidateStatusCodes  bool          `yaml:"validate_status_codes"`
+	AllowExtraFields     bool          `yaml:"allow_extra_fields"`
+	ValidateFormats      bool          `yaml:"validate_formats"`
+	CoverageReporting    bool          `yaml:"coverage_reporting"`
+	ReportFormat         []string      `yaml:"report_format"`
+	ReportPath           string        `yaml:"report_path"`
+	ReportInterval       time.Duration `yaml:"report_interval"`
+	MaxConcurrentValidations int       `yaml:"max_concurrent_validations"`
+	ValidationTimeout    time.Duration `yaml:"validation_timeout"`
+}
+
+// ToStateConfig converts the wrapper to the state package config
+func (c *StateConfig) ToStateConfig() *state.Config {
+	return &state.Config{
+		Enabled:         c.Enabled,
+		CleanupInterval: c.CleanupInterval,
+		DefaultTTL:      c.DefaultTTL,
+		Storage: state.StorageConfig{
+			Type:     c.Storage.Type,
+			FilePath: c.Storage.FilePath,
+			Options:  c.Storage.Options,
+		},
+	}
+}
+
+// ToValidationConfig converts the wrapper to the validation package config
+func (c *ValidationConfigWrapper) ToValidationConfig() *validation.Config {
+	return &validation.Config{
+		Enabled:                  c.Enabled,
+		StrictMode:               c.StrictMode,
+		FailOnInvalid:           c.FailOnInvalid,
+		ValidateHeaders:         c.ValidateHeaders,
+		ValidateQuery:           c.ValidateQuery,
+		ValidatePath:            c.ValidatePath,
+		ValidateBody:            c.ValidateBody,
+		ValidateStatusCodes:     c.ValidateStatusCodes,
+		AllowExtraFields:        c.AllowExtraFields,
+		ValidateFormats:         c.ValidateFormats,
+		CoverageReporting:       c.CoverageReporting,
+		ReportFormat:            c.ReportFormat,
+		ReportPath:              c.ReportPath,
+		ReportInterval:          c.ReportInterval,
+		MaxConcurrentValidations: c.MaxConcurrentValidations,
+		ValidationTimeout:       c.ValidationTimeout,
+	}
 }

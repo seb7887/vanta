@@ -38,6 +38,8 @@ func main() {
 	rootCmd.AddCommand(newConfigCommand(ctx, logger))
 	rootCmd.AddCommand(newChaosCommand(ctx, logger))
 	rootCmd.AddCommand(newRecordCommand(ctx, logger))
+	rootCmd.AddCommand(newStateCommand(ctx, logger))
+	rootCmd.AddCommand(newValidationCommand(ctx, logger))
 	rootCmd.AddCommand(newVersionCommand(version, commit, buildTime))
 
 	// Execute the root command

@@ -80,9 +80,44 @@ func DefaultConfig() *Config {
 			ExcludeHeaders: []string{ // Exclude sensitive headers by default
 				"cookie",
 				"set-cookie",
-				"authorization", 
+				"authorization",
 				"x-api-key",
 			},
+		},
+		State: StateConfig{
+			Enabled:         false, // Disabled by default
+			CleanupInterval: 5 * time.Minute,
+			DefaultTTL:      0, // No expiration by default
+			Storage: StateStorageConfig{
+				Type:     "memory", // Memory storage by default
+				FilePath: "./state.json",
+				Options:  make(map[string]string),
+			},
+			Context: StateContextConfig{
+				DefaultTTL:      30 * time.Minute,
+				SessionTTL:      24 * time.Hour,
+				RequestTTL:      5 * time.Minute,
+				CleanupInterval: 5 * time.Minute,
+			},
+			Endpoints: make(map[string]EndpointStateConfig),
+		},
+		Validation: ValidationConfigWrapper{
+			Enabled:              true,  // Enabled by default
+			StrictMode:           false, // Lenient by default
+			FailOnInvalid:        false, // Don't fail requests by default
+			ValidateHeaders:      true,
+			ValidateQuery:        true,
+			ValidatePath:         true,
+			ValidateBody:         true,
+			ValidateStatusCodes:  true,
+			AllowExtraFields:     true,  // Allow extra fields by default
+			ValidateFormats:      true,
+			CoverageReporting:    true,
+			ReportFormat:         []string{"json", "html"},
+			ReportPath:           "./validation-reports",
+			ReportInterval:       5 * time.Minute,
+			MaxConcurrentValidations: 100,
+			ValidationTimeout:    30 * time.Second,
 		},
 	}
 }

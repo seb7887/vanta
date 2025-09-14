@@ -1,8 +1,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"runtime"
 	"strconv"
 	"strings"
@@ -12,9 +16,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
-	"vanta/pkg/chaos"
-	"vanta/pkg/config"
-	"vanta/pkg/recorder"
+	"github.com/vanta/pkg/chaos"
+	"github.com/vanta/pkg/config"
+	"github.com/vanta/pkg/recorder"
+	"github.com/vanta/pkg/state"
+	"github.com/vanta/pkg/validation"
 )
 
 // MiddlewareFunc is the type of function for FastHTTP middleware
@@ -502,4 +508,248 @@ func Recording(recordingEngine recorder.RecordingEngine, logger *zap.Logger) Mid
 			}()
 		}
 	}
+}
+
+// StateManagement returns a middleware that manages state contexts
+func StateManagement(stateManager state.StateManager, contextManager *state.ContextManager, logger *zap.Logger) MiddlewareFunc {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(ctx *fasthttp.RequestCtx) {
+			// Check if state management is enabled
+			if stateManager == nil || !stateManager.IsEnabled() {
+				next(ctx)
+				return
+			}
+
+			// Extract session ID from header or cookie
+			sessionID := string(ctx.Request.Header.Peek("X-Session-ID"))
+			if sessionID == "" {
+				// Try to get from cookie
+				sessionID = string(ctx.Request.Header.Cookie("session_id"))
+			}
+			if sessionID == "" {
+				// Generate new session ID
+				sessionID = uuid.New().String()
+			}
+
+			// Get request ID from context
+			requestID := ""
+			if val := ctx.UserValue("request_id"); val != nil {
+				requestID = val.(string)
+			}
+
+			// Extract user ID from JWT token or header
+			userID := string(ctx.Request.Header.Peek("X-User-ID"))
+
+			// Create state context
+			endpointPath := string(ctx.Path())
+			stateContext := contextManager.CreateContext(sessionID, endpointPath, requestID, userID)
+
+			// Store state context in fasthttp context
+			ctx.SetUserValue("state_context", stateContext)
+
+			// Create scoped state manager for this request
+			scopedStateManager := state.NewScopedStateManager(stateManager, contextManager)
+			ctx.SetUserValue("state_manager", scopedStateManager)
+
+			// Set session ID in response header for client
+			ctx.Response.Header.Set("X-Session-ID", sessionID)
+
+			// Execute next handler
+			next(ctx)
+
+			// Cleanup context after request (optional, for short-lived contexts)
+			// contextManager.DeleteContext(sessionID, endpointPath, requestID)
+		}
+	}
+}
+
+// RequestValidation returns a middleware that validates incoming requests
+func RequestValidation(validationManager *validation.ValidationManager, logger *zap.Logger) MiddlewareFunc {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(ctx *fasthttp.RequestCtx) {
+			validator := validationManager.GetRequestValidator()
+			config := validationManager.GetConfig()
+
+			// Check if validation is enabled
+			if !config.Enabled {
+				next(ctx)
+				return
+			}
+
+			// Convert fasthttp request to http.Request for validation
+			httpReq, err := fasthttpToHTTPRequest(ctx)
+			if err != nil {
+				logger.Error("Failed to convert request for validation", zap.Error(err))
+				if config.FailOnInvalid {
+					ctx.SetStatusCode(fasthttp.StatusBadRequest)
+					ctx.SetContentType("application/json")
+					ctx.SetBodyString(`{"error": "Invalid request format"}`)
+					return
+				}
+				next(ctx)
+				return
+			}
+
+			// Validate the request
+			goCtx := context.Background()
+			if requestID := ctx.UserValue("request_id"); requestID != nil {
+				goCtx = context.WithValue(goCtx, "request_id", requestID)
+			}
+
+			result, err := validator.ValidateRequest(goCtx, httpReq)
+			if err != nil {
+				logger.Error("Request validation failed", zap.Error(err))
+				if config.FailOnInvalid {
+					ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+					ctx.SetContentType("application/json")
+					ctx.SetBodyString(`{"error": "Validation error"}`)
+					return
+				}
+				next(ctx)
+				return
+			}
+
+			// Store validation result for use by other middleware/handlers
+			ctx.SetUserValue("request_validation_result", result)
+
+			// Handle invalid requests based on configuration
+			if !result.Valid && config.FailOnInvalid {
+				ctx.SetStatusCode(fasthttp.StatusBadRequest)
+				ctx.SetContentType("application/json")
+
+				// Create detailed error response
+				errorResponse := map[string]interface{}{
+					"error":   "Request validation failed",
+					"valid":   result.Valid,
+					"errors":  result.Errors,
+					"warnings": result.Warnings,
+				}
+
+				if result.RequestID != "" {
+					errorResponse["request_id"] = result.RequestID
+				}
+
+				// Convert to JSON and send response
+				jsonBytes, _ := json.Marshal(errorResponse)
+				ctx.SetBody(jsonBytes)
+				return
+			}
+
+			// Log validation warnings if any
+			if len(result.Warnings) > 0 {
+				logger.Warn("Request validation warnings",
+					zap.String("path", string(ctx.Path())),
+					zap.String("method", string(ctx.Method())),
+					zap.Any("warnings", result.Warnings))
+			}
+
+			next(ctx)
+		}
+	}
+}
+
+// ResponseValidation returns a middleware that validates outgoing responses
+func ResponseValidation(validationManager *validation.ValidationManager, logger *zap.Logger) MiddlewareFunc {
+	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+		return func(ctx *fasthttp.RequestCtx) {
+			validator := validationManager.GetResponseValidator()
+			config := validationManager.GetConfig()
+
+			// Check if validation is enabled
+			if !config.Enabled {
+				next(ctx)
+				return
+			}
+
+			// Execute next handler first to get the response
+			next(ctx)
+
+			// Convert fasthttp request/response to http types for validation
+			httpReq, err := fasthttpToHTTPRequest(ctx)
+			if err != nil {
+				logger.Error("Failed to convert request for response validation", zap.Error(err))
+				return
+			}
+
+			httpResp := fasthttpToHTTPResponse(ctx)
+
+			// Validate the response
+			goCtx := context.Background()
+			if requestID := ctx.UserValue("request_id"); requestID != nil {
+				goCtx = context.WithValue(goCtx, "request_id", requestID)
+			}
+
+			result, err := validator.ValidateResponse(goCtx, httpReq, httpResp)
+			if err != nil {
+				logger.Error("Response validation failed", zap.Error(err))
+				return
+			}
+
+			// Store validation result
+			ctx.SetUserValue("response_validation_result", result)
+
+			// Log validation issues
+			if !result.Valid {
+				logger.Warn("Response validation failed",
+					zap.String("path", string(ctx.Path())),
+					zap.String("method", string(ctx.Method())),
+					zap.Int("status", result.StatusCode),
+					zap.Any("errors", result.Errors))
+			}
+
+			if len(result.Warnings) > 0 {
+				logger.Warn("Response validation warnings",
+					zap.String("path", string(ctx.Path())),
+					zap.String("method", string(ctx.Method())),
+					zap.Int("status", result.StatusCode),
+					zap.Any("warnings", result.Warnings))
+			}
+		}
+	}
+}
+
+// Helper functions to convert between fasthttp and net/http types
+
+func fasthttpToHTTPRequest(ctx *fasthttp.RequestCtx) (*http.Request, error) {
+	// Create a new HTTP request
+	method := string(ctx.Method())
+	uri := string(ctx.RequestURI())
+
+	var bodyReader io.Reader
+	if len(ctx.Request.Body()) > 0 {
+		bodyReader = bytes.NewReader(ctx.Request.Body())
+	}
+
+	req, err := http.NewRequest(method, uri, bodyReader)
+	if err != nil {
+		return nil, err
+	}
+
+	// Copy headers
+	ctx.Request.Header.VisitAll(func(key, value []byte) {
+		req.Header.Add(string(key), string(value))
+	})
+
+	// Set host
+	req.Host = string(ctx.Host())
+
+	// Set remote address
+	req.RemoteAddr = ctx.RemoteAddr().String()
+
+	return req, nil
+}
+
+func fasthttpToHTTPResponse(ctx *fasthttp.RequestCtx) *http.Response {
+	resp := &http.Response{
+		StatusCode: ctx.Response.StatusCode(),
+		Header:     make(http.Header),
+		Body:       io.NopCloser(bytes.NewReader(ctx.Response.Body())),
+	}
+
+	// Copy headers
+	ctx.Response.Header.VisitAll(func(key, value []byte) {
+		resp.Header.Add(string(key), string(value))
+	})
+
+	return resp
 }
