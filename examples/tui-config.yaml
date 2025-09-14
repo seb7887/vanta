@@ -1,0 +1,164 @@
+# TUI Configuration Example
+# This configuration is optimized for use with the Terminal UI (TUI) mode
+# Launch with: mocker tui --config examples/tui-config.yaml
+
+# Server configuration
+server:
+  port: 8080
+  host: "localhost"
+  read_timeout: 30s
+  write_timeout: 30s
+  max_conns_per_ip: 100
+  max_request_size: "10MB"
+  concurrency: 1000
+  reuse_port: true
+
+# Mock data generation
+mock:
+  seed: 12345
+  locale: "en"
+  max_depth: 5
+  default_array_size: 3
+  prefer_examples: true
+
+# Logging configuration (optimized for TUI viewing)
+logging:
+  level: "info"        # Use "debug" for more detailed logs in TUI
+  format: "console"    # Console format works better in TUI
+  output: "stdout"     # TUI captures stdout logs
+  sampling: false      # Disable sampling to see all logs in TUI
+  add_caller: true     # Show caller info for debugging
+
+# Metrics configuration (enabled for TUI dashboard)
+metrics:
+  enabled: true
+  port: 9090           # Separate port for Prometheus metrics
+  path: "/metrics"
+  prometheus: true
+
+# Chaos testing configuration (for TUI demonstration)
+chaos:
+  enabled: true
+  scenarios:
+    - name: "api_latency"
+      type: "latency"
+      endpoints: ["/api/*"]
+      probability: 0.05  # 5% chance
+      parameters:
+        min_delay: "10ms"
+        max_delay: "100ms"
+
+    - name: "service_errors"
+      type: "error"
+      endpoints: ["/api/users", "/api/orders"]
+      probability: 0.03  # 3% chance
+      parameters:
+        error_codes: [500, 502, 503]
+        custom_body: '{"error": "Service temporarily unavailable"}'
+
+    - name: "auth_failures"
+      type: "error"
+      endpoints: ["/api/auth/*"]
+      probability: 0.02  # 2% chance
+      parameters:
+        error_codes: [401, 403]
+        custom_body: '{"error": "Authentication failed"}'
+
+# Recording configuration (for request/response analysis in TUI)
+recording:
+  enabled: true
+  storage:
+    type: "file"
+    directory: "./recordings"
+    format: "json"
+  filters:
+    - type: "method"
+      values: ["GET", "POST", "PUT", "DELETE"]
+      negate: false
+    - type: "status"
+      values: ["404", "500"]
+      negate: true  # Exclude 404s and 500s from recording
+  max_recordings: 1000
+  max_body_size: 1048576  # 1MB
+  include_headers: ["Authorization", "Content-Type", "User-Agent", "X-Request-ID"]
+  exclude_headers: ["Cookie", "Set-Cookie"]
+
+# Plugin configuration
+plugins:
+  - name: "auth"
+    enabled: false     # Disable for demo purposes
+    config:
+      type: "jwt"
+      secret: "demo-secret-key"
+      required_endpoints: ["/api/protected/*"]
+
+  - name: "rate_limit"
+    enabled: true
+    config:
+      requests_per_minute: 100
+      burst_size: 10
+      per_ip: true
+      exclude_endpoints: ["/health", "/metrics"]
+
+  - name: "cors"
+    enabled: true
+    config:
+      allowed_origins: ["*"]
+      allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      allowed_headers: ["*"]
+      allow_credentials: false
+      max_age: 3600
+
+  - name: "logging"
+    enabled: true
+    config:
+      log_requests: true
+      log_responses: false
+      include_body: false
+      max_body_size: 1000
+
+# Middleware configuration
+middleware:
+  cors:
+    enabled: false  # Using CORS plugin instead
+    allow_origins: ["*"]
+    allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers: ["*"]
+    allow_credentials: false
+    max_age: 3600
+
+  timeout:
+    enabled: true
+    duration: 30s
+
+  recovery:
+    enabled: true
+    print_stack: false  # Don't print stack traces in production
+    log_stack: true     # But log them for debugging
+
+  request_id: true      # Enable request ID tracking
+
+# Hot reload configuration (useful for TUI development)
+hotreload:
+  enabled: true
+  watch_config: true    # Watch this config file for changes
+  watch_spec: true      # Watch OpenAPI spec for changes
+  debounce_delay: 500ms # Wait 500ms before applying changes
+
+# Example endpoints for TUI demonstration
+# This section is not part of the actual configuration
+# but serves as documentation for test endpoints you can hit
+#
+# Test endpoints when using the TUI:
+# curl http://localhost:8080/health
+# curl http://localhost:8080/api/users
+# curl http://localhost:8080/api/orders
+# curl http://localhost:8080/metrics
+# curl -X POST http://localhost:8080/api/users -d '{"name":"John"}' -H "Content-Type: application/json"
+#
+# TUI Controls:
+# - Tab/Shift+Tab: Switch between Dashboard, Logs, and Config tabs
+# - Dashboard: View real-time metrics, request rates, and endpoint statistics
+# - Logs: Use ↑/↓ to scroll, 'f' to filter by level, 'c' to clear logs
+# - Config: Use ↑/↓ to navigate fields, Enter to edit, Ctrl+S to save changes
+# - Press 'q' or Ctrl+C to quit the TUI

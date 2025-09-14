@@ -34,6 +34,7 @@ func main() {
 
 	// Add subcommands
 	rootCmd.AddCommand(newStartCommand(ctx, logger))
+	rootCmd.AddCommand(newTUICommand(ctx, logger))
 	rootCmd.AddCommand(newConfigCommand(ctx, logger))
 	rootCmd.AddCommand(newChaosCommand(ctx, logger))
 	rootCmd.AddCommand(newRecordCommand(ctx, logger))
