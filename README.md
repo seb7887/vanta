@@ -42,19 +42,22 @@ Or try the minimal quickstart example:
 vanta start --spec examples/quickstart/openapi.yaml --config examples/quickstart/config.yaml
 ```
 
-## Documentation
+## 📖 Documentation
 
-- Getting Started: docs/getting-started.md
-- Configuration Reference: docs/configuration.md
-- OpenAPI & Data Generation: docs/openapi-and-data-generation.md
-- Middleware & Metrics: docs/middleware-and-metrics.md
-- Chaos Guide: docs/chaos-guide.md
-- Recording & Replay: docs/recording-and-replay.md
-- Plugins Guide: docs/plugins-guide.md (Built-ins: docs/builtin-plugins.md)
-- Validation Guide: docs/validation-guide.md
-- TUI Guide: docs/tui-guide.md
-- Hot Reload & State: docs/hot-reload-and-state.md
-- Docker & Kubernetes: docs/docker-and-kubernetes.md
+**[📚 Complete Documentation Hub →](docs/README.md)**
+
+### Quick Links
+| For Users | For Developers | For Operations |
+|-----------|----------------|----------------|
+| **[Getting Started](docs/user-guide/getting-started.md)** | **[Developer Setup](docs/developer-guide/getting-started.md)** | **[Production Guide](docs/deployment/production-best-practices.md)** |
+| [Configuration](docs/user-guide/configuration.md) | [Architecture](docs/developer-guide/architecture.md) | [Monitoring](docs/deployment/monitoring-and-troubleshooting.md) |
+| [Features Guide](docs/user-guide/openapi-and-data-generation.md) | [Development Setup](docs/developer-guide/development-setup.md) | [Performance](docs/deployment/performance-tuning.md) |
+
+### All Documentation
+- **User Guide**: [Getting Started](docs/user-guide/getting-started.md) • [Configuration](docs/user-guide/configuration.md) • [Data Generation](docs/user-guide/openapi-and-data-generation.md) • [Middleware](docs/user-guide/middleware-and-metrics.md) • [Chaos Testing](docs/user-guide/chaos-guide.md) • [Recording](docs/user-guide/recording-and-replay.md) • [Validation](docs/user-guide/validation-guide.md) • [TUI](docs/user-guide/tui-guide.md) • [Hot Reload](docs/user-guide/hot-reload-and-state.md)
+- **Developer Guide**: [Quick Start](docs/developer-guide/getting-started.md) • [Architecture](docs/developer-guide/architecture.md) • [Development Setup](docs/developer-guide/development-setup.md)
+- **API Reference**: [Plugins](docs/api-reference/plugins-guide.md) • [Built-in Plugins](docs/api-reference/builtin-plugins.md)
+- **Deployment**: [Docker & K8s](docs/deployment/docker-and-kubernetes.md) • [Production](docs/deployment/production-best-practices.md) • [Monitoring](docs/deployment/monitoring-and-troubleshooting.md) • [Performance](docs/deployment/performance-tuning.md)
 
 ## Installation
 
