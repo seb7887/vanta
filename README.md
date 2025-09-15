@@ -61,10 +61,26 @@ vanta start --spec examples/quickstart/openapi.yaml --config examples/quickstart
 
 ## Installation
 
+### Go Install (Recommended)
+
+Prerequisites: Go 1.25+
+
+**Full version with all commands:**
+```bash
+go install github.com/seb7887/vanta/cmd/mocker@latest
+```
+
+**Quick install (convenience wrapper):**
+```bash
+go install github.com/seb7887/vanta@latest
+```
+
+*Note: The quick install provides basic functionality and guides you to install the full version.*
+
 ### From Source
 Prerequisites: Go 1.25+
 
-```
+```bash
 git clone <your-repo-url> vanta && cd vanta
 make build            # outputs bin/vanta
 # or

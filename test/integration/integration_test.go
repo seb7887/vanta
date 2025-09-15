@@ -217,7 +217,7 @@ func TestPluginConfigurationSystemIntegration(t *testing.T) {
 			},
 		}
 
-		result := registry.substituteEnvironmentVariables(config)
+		result := registry.SubstituteEnvironmentVariables(config)
 
 		// Check that environment variables were substituted
 		if result["jwt_secret"] != "integration-test-secret-key-that-is-very-long-for-security" {
@@ -280,7 +280,7 @@ func TestPluginConfigurationSystemIntegration(t *testing.T) {
 		registry := plugins.NewPluginConfigRegistry()
 
 		// Register a test migration
-		migration := ConfigMigration{
+		migration := plugins.ConfigMigration{
 			FromVersion: "v1",
 			ToVersion:   "v2",
 			Migrate: func(config map[string]interface{}) (map[string]interface{}, error) {
@@ -345,7 +345,7 @@ func TestPluginConfigurationSystemIntegration(t *testing.T) {
 				}
 
 				// Substitute environment variables
-				registry.substituteEnvironmentVariables(config)
+				registry.SubstituteEnvironmentVariables(config)
 			}()
 		}
 

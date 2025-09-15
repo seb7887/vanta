@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Example: Using Built-in Plugins Programmatically
 //
 // This example demonstrates how to use the built-in plugins

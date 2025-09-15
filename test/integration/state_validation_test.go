@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/seb7887/vanta/pkg/config"
 	"github.com/seb7887/vanta/pkg/openapi"
 	"github.com/seb7887/vanta/pkg/state"
 	"github.com/seb7887/vanta/pkg/validation"

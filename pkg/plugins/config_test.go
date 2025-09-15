@@ -108,7 +108,7 @@ func testEnvironmentSubstitution(t *testing.T) {
 		},
 	}
 	
-	result := registry.substituteEnvironmentVariables(config)
+	result := registry.SubstituteEnvironmentVariables(config)
 	
 	if result["jwt_secret"] != "test-secret-value" {
 		t.Errorf("Expected 'test-secret-value', got '%v'", result["jwt_secret"])
@@ -628,7 +628,7 @@ func BenchmarkEnvironmentSubstitution(b *testing.B) {
 	
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		registry.substituteEnvironmentVariables(config)
+		registry.SubstituteEnvironmentVariables(config)
 	}
 }
 

@@ -419,8 +419,8 @@ func (r *PluginConfigRegistry) buildFieldPath(parent, field string) string {
 	return fmt.Sprintf("%s.%s", parent, field)
 }
 
-// substituteEnvironmentVariables performs environment variable substitution in configuration
-func (r *PluginConfigRegistry) substituteEnvironmentVariables(config map[string]interface{}) map[string]interface{} {
+// SubstituteEnvironmentVariables performs environment variable substitution in configuration
+func (r *PluginConfigRegistry) SubstituteEnvironmentVariables(config map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{})
 	
 	for key, value := range config {
@@ -436,7 +436,7 @@ func (r *PluginConfigRegistry) substituteValue(value interface{}) interface{} {
 	case string:
 		return r.expandEnvironmentVariables(v)
 	case map[string]interface{}:
-		return r.substituteEnvironmentVariables(v)
+		return r.SubstituteEnvironmentVariables(v)
 	case []interface{}:
 		result := make([]interface{}, len(v))
 		for i, item := range v {
@@ -480,7 +480,7 @@ var globalConfigRegistry = NewPluginConfigRegistry()
 // CreatePluginFromConfig creates a plugin instance from configuration
 func CreatePluginFromConfig(name string, config map[string]interface{}) (Plugin, error) {
 	// Substitute environment variables
-	config = globalConfigRegistry.substituteEnvironmentVariables(config)
+	config = globalConfigRegistry.SubstituteEnvironmentVariables(config)
 	
 	// Validate configuration
 	validationResult := globalConfigRegistry.ValidateConfig(name, config)
@@ -514,7 +514,7 @@ func CreatePluginFromConfig(name string, config map[string]interface{}) (Plugin,
 // ValidatePluginConfig validates a plugin configuration without creating the plugin
 func ValidatePluginConfig(name string, config map[string]interface{}) error {
 	// Substitute environment variables
-	config = globalConfigRegistry.substituteEnvironmentVariables(config)
+	config = globalConfigRegistry.SubstituteEnvironmentVariables(config)
 	
 	// Validate configuration
 	validationResult := globalConfigRegistry.ValidateConfig(name, config)

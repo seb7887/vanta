@@ -2,6 +2,10 @@ package cli
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -38,4 +42,36 @@ func ExecuteWithLogger(rootCmd *cobra.Command, logger *zap.Logger) error {
 		return err
 	}
 	return nil
+}
+
+// SetupGracefulShutdown configures graceful shutdown handling
+func SetupGracefulShutdown(logger *zap.Logger) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		sig := <-c
+		logger.Info("Received shutdown signal", zap.String("signal", sig.String()))
+		logger.Info("Initiating graceful shutdown...")
+
+		// Give commands time to shut down gracefully
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+
+		// Cancel the main context to signal shutdown
+		cancel()
+
+		// Wait for shutdown timeout
+		<-shutdownCtx.Done()
+		if shutdownCtx.Err() == context.DeadlineExceeded {
+			logger.Warn("Graceful shutdown timeout exceeded, forcing exit")
+		}
+
+		logger.Info("Shutdown complete")
+		os.Exit(0)
+	}()
+
+	return ctx, cancel
 }
