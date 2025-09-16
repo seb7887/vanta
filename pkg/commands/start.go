@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/seb7887/vanta/pkg/openapi"
 )
 
-func newStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var (
 		specFile   string
 		port       int

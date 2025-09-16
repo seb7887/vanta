@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	"github.com/seb7887/vanta/pkg/state"
 )
 
-func newStateCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewStateCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configFile string
 
 	cmd := &cobra.Command{
@@ -28,18 +28,18 @@ func newStateCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config file (default is mocker.yaml)")
 
 	// Add subcommands
-	cmd.AddCommand(newStateGetCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newStateSetCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newStateDeleteCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newStateClearCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newStateListCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newStateExportCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newStateImportCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateGetCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateSetCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateDeleteCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateClearCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateListCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateExportCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewStateImportCommand(ctx, logger, &configFile))
 
 	return cmd
 }
 
-func newStateGetCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateGetCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		scope   string
 		format  string
@@ -121,7 +121,7 @@ func newStateGetCommand(ctx context.Context, logger *zap.Logger, configFile *str
 	return cmd
 }
 
-func newStateSetCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateSetCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		scope string
 		ttl   time.Duration
@@ -205,7 +205,7 @@ func newStateSetCommand(ctx context.Context, logger *zap.Logger, configFile *str
 	return cmd
 }
 
-func newStateDeleteCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateDeleteCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var scope string
 
 	cmd := &cobra.Command{
@@ -254,7 +254,7 @@ func newStateDeleteCommand(ctx context.Context, logger *zap.Logger, configFile *
 	return cmd
 }
 
-func newStateClearCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateClearCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		scope   string
 		confirm bool
@@ -313,7 +313,7 @@ func newStateClearCommand(ctx context.Context, logger *zap.Logger, configFile *s
 	return cmd
 }
 
-func newStateListCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateListCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		scope  string
 		format string
@@ -404,7 +404,7 @@ func newStateListCommand(ctx context.Context, logger *zap.Logger, configFile *st
 	return cmd
 }
 
-func newStateExportCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateExportCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var output string
 
 	cmd := &cobra.Command{
@@ -467,7 +467,7 @@ func newStateExportCommand(ctx context.Context, logger *zap.Logger, configFile *
 	return cmd
 }
 
-func newStateImportCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewStateImportCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var merge bool
 
 	cmd := &cobra.Command{

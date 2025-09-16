@@ -15,7 +15,7 @@ LDFLAGS := -X main.version=$(VERSION) \
 build:
 	@echo "Building vanta..."
 	@mkdir -p .cache/go-build .cache/go-mod bin
-	@GOCACHE=$(CURDIR)/.cache/go-build GOMODCACHE=$(CURDIR)/.cache/go-mod go build -ldflags="$(LDFLAGS)" -o bin/vanta ./cmd/mocker
+	@GOCACHE=$(CURDIR)/.cache/go-build GOMODCACHE=$(CURDIR)/.cache/go-mod go build -ldflags="$(LDFLAGS)" -o bin/vanta ./main.go
 
 build-dev:
 	@echo "Building for development..."

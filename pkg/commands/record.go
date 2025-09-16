@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 // newRecordCommand creates the record command with subcommands
-func newRecordCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewRecordCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "record",
 		Short: "Recording and replay commands for traffic capture",
@@ -42,19 +42,19 @@ Available subcommands:
 	}
 
 	// Add subcommands
-	cmd.AddCommand(newRecordStartCommand(ctx, logger))
-	cmd.AddCommand(newRecordStopCommand(ctx, logger))
-	cmd.AddCommand(newRecordListCommand(ctx, logger))
-	cmd.AddCommand(newRecordShowCommand(ctx, logger))
-	cmd.AddCommand(newRecordDeleteCommand(ctx, logger))
-	cmd.AddCommand(newRecordReplayCommand(ctx, logger))
-	cmd.AddCommand(newRecordExportCommand(ctx, logger))
+	cmd.AddCommand(NewRecordStartCommand(ctx, logger))
+	cmd.AddCommand(NewRecordStopCommand(ctx, logger))
+	cmd.AddCommand(NewRecordListCommand(ctx, logger))
+	cmd.AddCommand(NewRecordShowCommand(ctx, logger))
+	cmd.AddCommand(NewRecordDeleteCommand(ctx, logger))
+	cmd.AddCommand(NewRecordReplayCommand(ctx, logger))
+	cmd.AddCommand(NewRecordExportCommand(ctx, logger))
 
 	return cmd
 }
 
-// newRecordStartCommand creates the record start subcommand
-func newRecordStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordStartCommand creates the record start subcommand
+func NewRecordStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 	var filters []string
 	var outputDir string
@@ -90,8 +90,8 @@ func newRecordStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Comma
 	return cmd
 }
 
-// newRecordStopCommand creates the record stop subcommand
-func newRecordStopCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordStopCommand creates the record stop subcommand
+func NewRecordStopCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 
 	cmd := &cobra.Command{
@@ -113,8 +113,8 @@ func newRecordStopCommand(ctx context.Context, logger *zap.Logger) *cobra.Comman
 	return cmd
 }
 
-// newRecordListCommand creates the record list subcommand
-func newRecordListCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordListCommand creates the record list subcommand
+func NewRecordListCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 	var limit int
 	var method string
@@ -150,8 +150,8 @@ func newRecordListCommand(ctx context.Context, logger *zap.Logger) *cobra.Comman
 	return cmd
 }
 
-// newRecordShowCommand creates the record show subcommand
-func newRecordShowCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordShowCommand creates the record show subcommand
+func NewRecordShowCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 	var format string
 
@@ -176,8 +176,8 @@ func newRecordShowCommand(ctx context.Context, logger *zap.Logger) *cobra.Comman
 	return cmd
 }
 
-// newRecordDeleteCommand creates the record delete subcommand
-func newRecordDeleteCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordDeleteCommand creates the record delete subcommand
+func NewRecordDeleteCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 	var all bool
 	var force bool
@@ -206,8 +206,8 @@ func newRecordDeleteCommand(ctx context.Context, logger *zap.Logger) *cobra.Comm
 	return cmd
 }
 
-// newRecordReplayCommand creates the record replay subcommand
-func newRecordReplayCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordReplayCommand creates the record replay subcommand
+func NewRecordReplayCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 	var targetURL string
 	var concurrency int
@@ -249,8 +249,8 @@ func newRecordReplayCommand(ctx context.Context, logger *zap.Logger) *cobra.Comm
 	return cmd
 }
 
-// newRecordExportCommand creates the record export subcommand
-func newRecordExportCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewRecordExportCommand creates the record export subcommand
+func NewRecordExportCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
 	var format string
 	var output string

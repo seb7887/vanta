@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -11,21 +11,21 @@ import (
 	"github.com/seb7887/vanta/pkg/config"
 )
 
-func newConfigCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewConfigCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "config",
 		Short: "Configuration management commands",
 		Long:  `Commands for managing vanta configuration files.`,
 	}
 
-	cmd.AddCommand(newConfigInitCommand(logger))
-	cmd.AddCommand(newConfigValidateCommand(logger))
-	cmd.AddCommand(newConfigEditCommand(logger))
+	cmd.AddCommand(NewConfigInitCommand(logger))
+	cmd.AddCommand(NewConfigValidateCommand(logger))
+	cmd.AddCommand(NewConfigEditCommand(logger))
 
 	return cmd
 }
 
-func newConfigInitCommand(logger *zap.Logger) *cobra.Command {
+func NewConfigInitCommand(logger *zap.Logger) *cobra.Command {
 	var outputFile string
 
 	cmd := &cobra.Command{
@@ -64,7 +64,7 @@ func newConfigInitCommand(logger *zap.Logger) *cobra.Command {
 	return cmd
 }
 
-func newConfigValidateCommand(logger *zap.Logger) *cobra.Command {
+func NewConfigValidateCommand(logger *zap.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "validate [config-file]",
 		Short: "Validate a configuration file",
@@ -103,7 +103,7 @@ func newConfigValidateCommand(logger *zap.Logger) *cobra.Command {
 	return cmd
 }
 
-func newConfigEditCommand(logger *zap.Logger) *cobra.Command {
+func NewConfigEditCommand(logger *zap.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit [config-file]",
 		Short: "Edit a configuration file interactively",

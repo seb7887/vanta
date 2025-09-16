@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 // newTUICommand creates the tui command
-func newTUICommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewTUICommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var (
 		configPath string
 		specPath   string

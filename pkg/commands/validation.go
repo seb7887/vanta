@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/seb7887/vanta/pkg/validation"
 )
 
-func newValidationCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewValidationCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configFile string
 
 	cmd := &cobra.Command{
@@ -27,14 +27,14 @@ func newValidationCommand(ctx context.Context, logger *zap.Logger) *cobra.Comman
 	cmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "config file (default is mocker.yaml)")
 
 	// Add subcommands
-	cmd.AddCommand(newValidateSpecCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newValidateCoverageCommand(ctx, logger, &configFile))
-	cmd.AddCommand(newValidateComplianceCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewValidateSpecCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewValidateCoverageCommand(ctx, logger, &configFile))
+	cmd.AddCommand(NewValidateComplianceCommand(ctx, logger, &configFile))
 
 	return cmd
 }
 
-func newValidateSpecCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewValidateSpecCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		output    string
 		format    string
@@ -120,7 +120,7 @@ func newValidateSpecCommand(ctx context.Context, logger *zap.Logger, configFile 
 	return cmd
 }
 
-func newValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		output    string
 		format    string
@@ -212,7 +212,7 @@ func newValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configF
 	return cmd
 }
 
-func newValidateComplianceCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
+func NewValidateComplianceCommand(ctx context.Context, logger *zap.Logger, configFile *string) *cobra.Command {
 	var (
 		output    string
 		format    string

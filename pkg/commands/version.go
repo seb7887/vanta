@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newVersionCommand(version, commit, buildTime string) *cobra.Command {
+func NewVersionCommand(version, commit, buildTime string) *cobra.Command {
 	var detailed bool
 
 	cmd := &cobra.Command{

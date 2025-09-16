@@ -8,7 +8,7 @@ set -euo pipefail
 # Configuration
 BINARY_NAME="vanta"
 BUILD_DIR="build"
-CMD_PATH="./cmd/mocker"
+CMD_PATH="./main.go"
 
 # Colors for output
 RED='\033[0;31m'

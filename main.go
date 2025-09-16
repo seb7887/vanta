@@ -7,9 +7,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"github.com/seb7887/vanta/pkg/cli"
+
+	// Import command packages
+	"github.com/seb7887/vanta/pkg/commands"
 )
 
 var (
@@ -30,24 +32,11 @@ func main() {
 	ctx, cancel := setupGracefulShutdown(logger)
 	defer cancel()
 
-	// Create root command with context and logger - minimal version without subcommands
+	// Create root command with context and logger
 	rootCmd := cli.NewRootCommand(ctx, logger, version, commit, buildTime)
 
-	// For now, just show a message pointing to the full version
-	rootCmd.Short = "Vanta mocker - install from cmd/mocker for full functionality"
-	rootCmd.Long = `This is a convenience entry point for Vanta.
-
-For the full vanta application with all commands, install using:
-  go install github.com/seb7887/vanta/cmd/mocker@latest
-
-Or if you have the source code:
-  go install ./cmd/mocker`
-
-	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
-		logger.Info("For full functionality, install the complete version",
-			zap.String("command", "go install github.com/seb7887/vanta/cmd/mocker@latest"))
-		return cmd.Help()
-	}
+	// Register all commands
+	commands.RegisterCommands(rootCmd, ctx, logger, version, commit, buildTime)
 
 	// Execute the root command
 	if err := rootCmd.Execute(); err != nil {

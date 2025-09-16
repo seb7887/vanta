@@ -1,4 +1,4 @@
-package main
+package commands
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 // newChaosCommand creates the chaos testing command and its subcommands
-func newChaosCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+func NewChaosCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chaos",
 		Short: "Chaos engineering commands for testing resilience",
@@ -44,16 +44,16 @@ Use subcommands to manage chaos scenarios:
 	}
 
 	// Add subcommands
-	cmd.AddCommand(newChaosStartCommand(ctx, logger))
-	cmd.AddCommand(newChaosStopCommand(ctx, logger))
-	cmd.AddCommand(newChaosStatusCommand(ctx, logger))
-	cmd.AddCommand(newChaosListCommand(ctx, logger))
+	cmd.AddCommand(NewChaosStartCommand(ctx, logger))
+	cmd.AddCommand(NewChaosStopCommand(ctx, logger))
+	cmd.AddCommand(NewChaosStatusCommand(ctx, logger))
+	cmd.AddCommand(NewChaosListCommand(ctx, logger))
 
 	return cmd
 }
 
-// newChaosStartCommand creates the chaos start subcommand
-func newChaosStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewChaosStartCommand creates the chaos start subcommand
+func NewChaosStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var (
 		configFile string
 		scenario   string
@@ -82,8 +82,8 @@ You can specify a particular scenario to run, or run all enabled scenarios.`,
 	return cmd
 }
 
-// newChaosStopCommand creates the chaos stop subcommand
-func newChaosStopCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewChaosStopCommand creates the chaos stop subcommand
+func NewChaosStopCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stop",
 		Short: "Stop all chaos testing scenarios",
@@ -96,8 +96,8 @@ func newChaosStopCommand(ctx context.Context, logger *zap.Logger) *cobra.Command
 	return cmd
 }
 
-// newChaosStatusCommand creates the chaos status subcommand
-func newChaosStatusCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewChaosStatusCommand creates the chaos status subcommand
+func NewChaosStatusCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configFile string
 
 	cmd := &cobra.Command{
@@ -117,8 +117,8 @@ func newChaosStatusCommand(ctx context.Context, logger *zap.Logger) *cobra.Comma
 	return cmd
 }
 
-// newChaosListCommand creates the chaos list subcommand
-func newChaosListCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
+// NewChaosListCommand creates the chaos list subcommand
+func NewChaosListCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configFile string
 
 	cmd := &cobra.Command{
