@@ -7,16 +7,22 @@ server:
     max_request_size: 10MB
     concurrency: 256000
     reuse_port: true
-chaos:
-    enabled: false
-    scenarios: []
-plugins: []
+mock:
+    seed: 12345
+    locale: "en"
+    max_depth: 5
+    default_array_length: 3
+    prefer_examples: false
 logging:
-    level: info
+    level: "error"
     format: json
     output: stdout
     sampling: false
     add_caller: true
+chaos:
+    enabled: false
+    scenarios: []
+plugins: []
 metrics:
     enabled: true
     port: 9090

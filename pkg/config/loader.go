@@ -8,6 +8,8 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"gopkg.in/yaml.v3"
 )
 
@@ -109,4 +111,64 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("hotreload.watch_config", true)
 	v.SetDefault("hotreload.watch_spec", true)
 	v.SetDefault("hotreload.debounce_delay", 500*time.Millisecond)
+}
+
+// NewLoggerFromConfig creates a zap logger from the logging configuration
+func NewLoggerFromConfig(logConfig LoggingConfig) (*zap.Logger, error) {
+	// Parse log level
+	level, err := zapcore.ParseLevel(logConfig.Level)
+	if err != nil {
+		return nil, fmt.Errorf("invalid log level '%s': %w", logConfig.Level, err)
+	}
+
+	// Configure encoder
+	var config zap.Config
+	if logConfig.Format == "console" {
+		config = zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	} else {
+		config = zap.NewProductionConfig()
+	}
+
+	// Set log level
+	config.Level = zap.NewAtomicLevelAt(level)
+
+	// Configure sampling
+	if !logConfig.Sampling {
+		config.Sampling = nil
+	}
+
+	// Configure caller information
+	config.DisableCaller = !logConfig.AddCaller
+
+	// Configure output paths
+	switch logConfig.Output {
+	case "stdout", "":
+		config.OutputPaths = []string{"stdout"}
+	case "stderr":
+		config.OutputPaths = []string{"stderr"}
+	default:
+		// If it's not stdout/stderr, treat it as a file path
+		config.OutputPaths = []string{logConfig.Output}
+	}
+
+	// Build the logger
+	logger, err := config.Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build logger: %w", err)
+	}
+
+	return logger, nil
+}
+
+// NewLoggerWithDefaults creates a logger with sensible defaults if no config is provided
+func NewLoggerWithDefaults() (*zap.Logger, error) {
+	defaultLogConfig := LoggingConfig{
+		Level:     "info",
+		Format:    "json",
+		Output:    "stdout",
+		Sampling:  false,
+		AddCaller: true,
+	}
+	return NewLoggerFromConfig(defaultLogConfig)
 }

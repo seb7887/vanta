@@ -89,14 +89,14 @@ components:
         id:
           type: integer
           format: int64
-          example: 1
+          #example: 1
         name:
           type: string
-          example: "doggie"
+          #example: "doggie"
         status:
           type: string
           enum: [available, pending, sold]
-          example: "available"
+          #example: "available"
 
     NewPet:
       type: object
@@ -105,8 +105,8 @@ components:
       properties:
         name:
           type: string
-          example: "doggie"
+          #example: "doggie"
         status:
           type: string
           enum: [available, pending, sold]
-          example: "available"
+          #example: "available"

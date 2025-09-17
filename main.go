@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 	"github.com/seb7887/vanta/pkg/cli"
+	"github.com/seb7887/vanta/pkg/config"
 
 	// Import command packages
 	"github.com/seb7887/vanta/pkg/commands"
@@ -21,11 +22,8 @@ var (
 )
 
 func main() {
-	// Initialize structured logger
-	logger, err := zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
+	// Initialize logger - try to load from config file if available
+	logger := initializeLogger()
 	defer logger.Sync()
 
 	// Setup graceful shutdown
@@ -43,6 +41,56 @@ func main() {
 		logger.Error("Command execution failed", zap.Error(err))
 		os.Exit(1)
 	}
+}
+
+// initializeLogger creates a logger, preferring configuration from vanta.yaml if available
+func initializeLogger() *zap.Logger {
+	// Try to load config from default location first
+	configPaths := []string{"vanta.yaml", "vanta.yml", "config.yaml", "config.yml"}
+
+	for _, configPath := range configPaths {
+		if _, err := os.Stat(configPath); err == nil {
+			// Config file exists, try to load it
+			cfg, err := config.LoadFromFile(configPath)
+			if err != nil {
+				// Failed to load config file, fall back to default logger
+				logger, _ := config.NewLoggerWithDefaults()
+				logger.Warn("Failed to load config file, using default logging configuration",
+					zap.String("config_file", configPath),
+					zap.Error(err))
+				return logger
+			}
+
+			// Create logger from config
+			logger, err := config.NewLoggerFromConfig(cfg.Logging)
+			if err != nil {
+				// Failed to create logger from config, fall back to default
+				defaultLogger, _ := config.NewLoggerWithDefaults()
+				defaultLogger.Warn("Failed to create logger from config, using defaults",
+					zap.String("config_file", configPath),
+					zap.Error(err))
+				return defaultLogger
+			}
+
+			logger.Info("Logger initialized from configuration",
+				zap.String("config_file", configPath),
+				zap.String("level", cfg.Logging.Level),
+				zap.String("format", cfg.Logging.Format))
+			return logger
+		}
+	}
+
+	// No config file found, use defaults
+	logger, err := config.NewLoggerWithDefaults()
+	if err != nil {
+		// Last resort: use zap's production logger
+		logger, _ := zap.NewProduction()
+		logger.Warn("Failed to create default logger, using production defaults")
+		return logger
+	}
+
+	logger.Info("Logger initialized with default configuration")
+	return logger
 }
 
 func setupGracefulShutdown(logger *zap.Logger) (context.Context, context.CancelFunc) {
