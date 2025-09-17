@@ -48,13 +48,20 @@ func MockHandler(spec *openapi.Specification, generator openapi.DataGenerator, l
 		)
 		
 		// Create generation context
+		var seed int64
+		if defaultGen, ok := generator.(*openapi.DefaultDataGenerator); ok {
+			seed = defaultGen.GetSeed()
+		} else {
+			seed = ctx.Time().UnixNano()
+		}
+
 		genCtx := &openapi.GenerationContext{
 			MaxDepth:     5,
 			CurrentDepth: 0,
 			Visited:      make(map[string]bool),
 			ArraySizes:   make(map[string]int),
 			Locale:       "en",
-			Seed:         generator.(*openapi.DefaultDataGenerator).GetSeed(),
+			Seed:         seed,
 			Timestamp:    ctx.Time(),
 		}
 		

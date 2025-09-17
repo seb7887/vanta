@@ -250,23 +250,27 @@ func ValidateConfig(cfg *Config) error {
 // parseSize parses a size string like "10MB" and returns bytes
 func parseSize(size string) (int64, error) {
 	size = strings.TrimSpace(strings.ToUpper(size))
-	
-	units := map[string]int64{
-		"B":  1,
-		"KB": 1024,
-		"MB": 1024 * 1024,
-		"GB": 1024 * 1024 * 1024,
-		"TB": 1024 * 1024 * 1024 * 1024,
+
+	// Check units in order from longest to shortest to avoid partial matches
+	units := []struct {
+		suffix     string
+		multiplier int64
+	}{
+		{"TB", 1024 * 1024 * 1024 * 1024},
+		{"GB", 1024 * 1024 * 1024},
+		{"MB", 1024 * 1024},
+		{"KB", 1024},
+		{"B", 1},
 	}
 
-	for unit, multiplier := range units {
-		if strings.HasSuffix(size, unit) {
-			numStr := strings.TrimSuffix(size, unit)
+	for _, unit := range units {
+		if strings.HasSuffix(size, unit.suffix) {
+			numStr := strings.TrimSuffix(size, unit.suffix)
 			num, err := strconv.ParseFloat(numStr, 64)
 			if err != nil {
 				return 0, err
 			}
-			return int64(num * float64(multiplier)), nil
+			return int64(num * float64(unit.multiplier)), nil
 		}
 	}
 

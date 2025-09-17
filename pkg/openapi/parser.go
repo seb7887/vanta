@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -73,8 +74,9 @@ func (p *OpenAPIParser) Validate(spec *Specification) error {
 		return fmt.Errorf("no specification loaded")
 	}
 
-	// Use kin-openapi's validation
-	err := p.spec.Validate(nil)
+	// Use kin-openapi's validation with proper context
+	ctx := context.Background()
+	err := p.spec.Validate(ctx)
 	if err != nil {
 		return fmt.Errorf("OpenAPI validation failed: %w", err)
 	}
@@ -94,6 +96,11 @@ func (p *OpenAPIParser) GetSchemas() map[string]*Schema {
 
 // convertToInternalSpec converts kin-openapi spec to our internal representation
 func (p *OpenAPIParser) convertToInternalSpec(spec *openapi3.T) (*Specification, error) {
+	// Validate that spec.Info exists before proceeding
+	if spec.Info == nil {
+		return nil, fmt.Errorf("OpenAPI specification must have an 'info' section")
+	}
+
 	result := &Specification{
 		Version: spec.OpenAPI,
 		Info: InfoObject{
@@ -369,19 +376,33 @@ func ValidateSpecification(spec *Specification) error {
 	if spec == nil {
 		return fmt.Errorf("specification cannot be nil")
 	}
-	
+
+	// Validate Info section
 	if spec.Info.Title == "" {
 		return fmt.Errorf("specification title is required")
 	}
-	
+
 	if spec.Info.Version == "" {
 		return fmt.Errorf("specification version is required")
 	}
-	
+
+	// Validate Paths section
 	if len(spec.Paths) == 0 {
 		return fmt.Errorf("specification must have at least one path")
 	}
-	
-	// Basic validation - could be expanded
+
+	// Validate each path has at least one operation
+	for path, pathItem := range spec.Paths {
+		hasOperation := false
+		if pathItem.GET != nil || pathItem.POST != nil || pathItem.PUT != nil ||
+		   pathItem.DELETE != nil || pathItem.PATCH != nil {
+			hasOperation = true
+		}
+
+		if !hasOperation {
+			return fmt.Errorf("path '%s' must have at least one HTTP operation", path)
+		}
+	}
+
 	return nil
 }

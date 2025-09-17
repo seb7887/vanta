@@ -158,9 +158,16 @@ func parseOpenAPISpec(specFile string, logger *zap.Logger) (*openapi.Specificati
 		return nil, fmt.Errorf("invalid OpenAPI spec: %w", err)
 	}
 
+	var title string
+	if spec.Info.Title != "" {
+		title = spec.Info.Title
+	} else {
+		title = "Unknown"
+	}
+
 	logger.Info("OpenAPI specification parsed successfully",
 		zap.String("version", spec.Version),
-		zap.String("title", spec.Info.Title),
+		zap.String("title", title),
 		zap.Int("endpoints", len(spec.Paths)),
 	)
 
