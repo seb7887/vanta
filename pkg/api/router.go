@@ -7,6 +7,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
+	"github.com/seb7887/vanta/pkg/config"
 	"github.com/seb7887/vanta/pkg/openapi"
 )
 
@@ -65,6 +66,33 @@ func NewRouterWithGenerator(spec *openapi.Specification, generator openapi.DataG
 
 	// Register routes from OpenAPI spec with generator
 	if err := router.loadFromSpecWithGenerator(); err != nil {
+		return nil, fmt.Errorf("failed to load routes from spec: %w", err)
+	}
+
+	return router, nil
+}
+
+// NewRouterWithGeneratorAndConfig creates a new router instance with data generator and mock configuration
+func NewRouterWithGeneratorAndConfig(spec *openapi.Specification, generator openapi.DataGenerator, mockConfig config.MockConfig, logger *zap.Logger) (*Router, error) {
+	if spec == nil {
+		return nil, fmt.Errorf("specification cannot be nil")
+	}
+	if generator == nil {
+		return nil, fmt.Errorf("generator cannot be nil")
+	}
+	if logger == nil {
+		return nil, fmt.Errorf("logger cannot be nil")
+	}
+
+	router := &Router{
+		routes:    make(map[string]map[string]HandlerFunc),
+		spec:      spec,
+		generator: generator,
+		logger:    logger,
+	}
+
+	// Register routes from OpenAPI spec with generator and configuration
+	if err := router.loadFromSpecWithGeneratorAndConfig(mockConfig); err != nil {
 		return nil, fmt.Errorf("failed to load routes from spec: %w", err)
 	}
 
@@ -164,6 +192,44 @@ func (r *Router) loadFromSpecWithGenerator() error {
 	r.logger.Info("Routes loaded from OpenAPI spec with data generator",
 		zap.Int("total_routes", r.getTotalRoutes()),
 		zap.String("generator_type", "DefaultDataGenerator"),
+	)
+
+	return nil
+}
+
+// loadFromSpecWithGeneratorAndConfig loads routes from OpenAPI specification using the data generator with configuration
+func (r *Router) loadFromSpecWithGeneratorAndConfig(mockConfig config.MockConfig) error {
+	for path, pathItem := range r.spec.Paths {
+		if pathItem.GET != nil {
+			r.registerRoute("GET", path, MockHandlerWithConfig(r.spec, r.generator, mockConfig, r.logger))
+		}
+		if pathItem.POST != nil {
+			r.registerRoute("POST", path, MockHandlerWithConfig(r.spec, r.generator, mockConfig, r.logger))
+		}
+		if pathItem.PUT != nil {
+			r.registerRoute("PUT", path, MockHandlerWithConfig(r.spec, r.generator, mockConfig, r.logger))
+		}
+		if pathItem.DELETE != nil {
+			r.registerRoute("DELETE", path, MockHandlerWithConfig(r.spec, r.generator, mockConfig, r.logger))
+		}
+		if pathItem.PATCH != nil {
+			r.registerRoute("PATCH", path, MockHandlerWithConfig(r.spec, r.generator, mockConfig, r.logger))
+		}
+	}
+
+	// Add special routes
+	r.registerRoute("OPTIONS", "*", OptionsHandler())
+	r.registerRoute("GET", "/__health", HealthCheckHandler(r.spec))
+	r.registerRoute("GET", "/__info", InfoHandler(r.spec))
+
+	r.logger.Info("Routes loaded from OpenAPI spec with data generator and configuration",
+		zap.Int("total_routes", r.getTotalRoutes()),
+		zap.String("generator_type", "DefaultDataGenerator"),
+		zap.Int64("mock_seed", mockConfig.Seed),
+		zap.String("mock_locale", mockConfig.Locale),
+		zap.Int("mock_max_depth", mockConfig.MaxDepth),
+		zap.Int("mock_default_array_size", mockConfig.DefaultArraySize),
+		zap.Bool("mock_prefer_examples", mockConfig.PreferExamples),
 	)
 
 	return nil

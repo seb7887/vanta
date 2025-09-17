@@ -11,11 +11,11 @@ mock:
     seed: 12345
     locale: "en"
     max_depth: 5
-    default_array_length: 3
+    default_array_size: 3
     prefer_examples: false
 logging:
-    level: "error"
-    format: json
+    level: "info"
+    format: "json"
     output: stdout
     sampling: false
     add_caller: true

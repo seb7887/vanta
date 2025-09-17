@@ -8,6 +8,7 @@ import (
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
+	"github.com/seb7887/vanta/pkg/config"
 	"github.com/seb7887/vanta/pkg/openapi"
 )
 
@@ -75,6 +76,81 @@ func MockHandler(spec *openapi.Specification, generator openapi.DataGenerator, l
 		// Set response headers
 		setResponseHeaders(ctx, responseCode, mediaType)
 		
+		// Serialize and send response
+		return sendMockResponse(ctx, mockData, logger)
+	}
+}
+
+// MockHandlerWithConfig handles requests by generating mock responses with configuration
+func MockHandlerWithConfig(spec *openapi.Specification, generator openapi.DataGenerator, mockConfig config.MockConfig, logger *zap.Logger) HandlerFunc {
+	return func(ctx *fasthttp.RequestCtx) error {
+		method := string(ctx.Method())
+		path := string(ctx.Path())
+
+		logger.Debug("Processing mock request with config",
+			zap.String("method", method),
+			zap.String("path", path),
+			zap.Int64("seed", mockConfig.Seed),
+			zap.String("locale", mockConfig.Locale),
+			zap.Int("max_depth", mockConfig.MaxDepth),
+			zap.Int("default_array_size", mockConfig.DefaultArraySize),
+			zap.Bool("prefer_examples", mockConfig.PreferExamples),
+		)
+
+		// Find matching endpoint in the OpenAPI spec
+		endpoint, pathParams, found := findMatchingEndpoint(spec, method, path)
+		if !found {
+			return handleEndpointNotFound(ctx, method, path, logger)
+		}
+
+		logger.Debug("Found matching endpoint",
+			zap.String("operation_id", endpoint.OperationID),
+			zap.Any("path_params", pathParams),
+		)
+
+		// Determine appropriate response status code
+		responseCode := determineResponseCode(endpoint)
+
+		// Get response schema for the status code
+		responseSchema, mediaType := getResponseSchema(endpoint, responseCode)
+		if responseSchema == nil {
+			return handleNoResponseSchema(ctx, responseCode, logger)
+		}
+
+		logger.Debug("Generating mock response with config",
+			zap.String("response_code", responseCode),
+			zap.String("media_type", mediaType),
+		)
+
+		// Create generation context with configuration
+		var seed int64 = mockConfig.Seed
+		if seed == 0 {
+			if defaultGen, ok := generator.(*openapi.DefaultDataGenerator); ok {
+				seed = defaultGen.GetSeed()
+			} else {
+				seed = ctx.Time().UnixNano()
+			}
+		}
+
+		genCtx := openapi.NewGenerationContextWithConfig(
+			mockConfig.MaxDepth,
+			seed,
+			mockConfig.Locale,
+			mockConfig.DefaultArraySize,
+			mockConfig.PreferExamples,
+		)
+		genCtx.Timestamp = ctx.Time()
+
+		// Generate mock data
+		mockData, err := generator.Generate(responseSchema, genCtx)
+		if err != nil {
+			logger.Error("Failed to generate mock data", zap.Error(err))
+			return handleGenerationError(ctx, err, logger)
+		}
+
+		// Set response headers
+		setResponseHeaders(ctx, responseCode, mediaType)
+
 		// Serialize and send response
 		return sendMockResponse(ctx, mockData, logger)
 	}

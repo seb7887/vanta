@@ -106,6 +106,13 @@ func setDefaults(v *viper.Viper) {
 	// Chaos defaults
 	v.SetDefault("chaos.enabled", false)
 
+	// Mock defaults
+	v.SetDefault("mock.seed", 0)
+	v.SetDefault("mock.locale", "en")
+	v.SetDefault("mock.max_depth", 5)
+	v.SetDefault("mock.default_array_size", 2)
+	v.SetDefault("mock.prefer_examples", true)
+
 	// Hot reload defaults
 	v.SetDefault("hotreload.enabled", false)
 	v.SetDefault("hotreload.watch_config", true)

@@ -59,8 +59,8 @@ func NewServer(cfg *config.Config, spec *openapi.Specification, logger *zap.Logg
 		generator.SetLocale(cfg.Mock.Locale)
 	}
 
-	// Create router with generator
-	router, err := NewRouterWithGenerator(spec, generator, logger)
+	// Create router with generator and mock configuration
+	router, err := NewRouterWithGeneratorAndConfig(spec, generator, cfg.Mock, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create router: %w", err)
 	}
