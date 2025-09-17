@@ -22,7 +22,7 @@ go mod download
 # Build the project
 make build
 # or
-go build -o bin/vanta ./cmd/mocker
+go build -o bin/vanta ./main.go
 
 # Run tests
 go test ./...
@@ -87,7 +87,7 @@ go vet ./...
 
 ```
 vanta/
-├── cmd/mocker/          # CLI application entry point
+├── main.go/          # CLI application entry point
 ├── pkg/                 # Core packages (public API)
 │   ├── api/            # HTTP server and routing
 │   ├── chaos/          # Chaos engineering
@@ -109,7 +109,7 @@ vanta/
 
 ## Key Components
 
-- **cmd/mocker**: CLI interface and command handling
+- **main.go**: CLI interface and command handling
 - **pkg/api**: FastHTTP server, middleware stack, routing
 - **pkg/openapi**: OpenAPI spec parsing and realistic data generation
 - **pkg/plugins**: Plugin system for extensibility

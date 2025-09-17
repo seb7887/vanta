@@ -60,7 +60,7 @@ pkg/chaos/engine.go     - Interface ChaosEngine y DefaultChaosEngine
 pkg/chaos/latency.go    - LatencyInjector (sleep random)  
 pkg/chaos/faults.go     - ErrorInjector (códigos HTTP error)
 pkg/chaos/config.go     - Estructuras de configuración
-cmd/mocker/chaos.go     - Comando CLI para chaos scenarios
+main.go/chaos.go     - Comando CLI para chaos scenarios
 ```
 
 **Implementación detallada:**
@@ -130,7 +130,7 @@ cmd/mocker/chaos.go     - Comando CLI para chaos scenarios
 ✅ pkg/recorder/storage.go   - Storage interface (file-based + memory)
 ✅ pkg/recorder/recorder.go  - Request recorder principal con filtering
 ✅ pkg/recorder/replay.go    - Traffic replayer con concurrency
-✅ cmd/mocker/record.go      - CLI completo con subcomandos
+✅ main.go/record.go      - CLI completo con subcomandos
 ✅ pkg/config/config.go      - Configuración integrada
 ✅ pkg/api/middleware.go     - Recording middleware
 ✅ pkg/api/server.go         - Integración completa al servidor
@@ -225,7 +225,7 @@ cmd/mocker/chaos.go     - Comando CLI para chaos scenarios
   - ✅ Tags configurables para organización
 
 #### ✅ Tarea 3.2.5: CLI Commands - **IMPLEMENTADO**
-- **Archivo**: `cmd/mocker/record.go`
+- **Archivo**: `main.go/record.go`
 - **Comandos implementados**:
   ```bash
   ✅ mocker record start [flags]     # Iniciar grabación
@@ -302,7 +302,7 @@ cmd/mocker/chaos.go     - Comando CLI para chaos scenarios
 ```
 ✅ Dependencia: github.com/charmbracelet/bubbletea - AGREGADA
 ✅ pkg/cli/tui.go           - TUI framework completo implementado
-✅ cmd/mocker/tui.go        - Comando CLI 'mocker tui' integrado
+✅ main.go/tui.go        - Comando CLI 'mocker tui' integrado
 ✅ pkg/cli/tui_test.go      - Suite completa de tests unitarios
 ✅ examples/tui-config.yaml - Configuración de ejemplo optimizada
 ✅ Dashboard de métricas (RPS, latency, errors, memoria, uptime)
@@ -446,15 +446,15 @@ Ctrl+R         → Resetear a valores originales        ✅
 
 ### **4.2 Enhanced CLI Commands** ⚡ ALTA PRIORIDAD
 ```
-cmd/mocker/loadtest.go   - Comando load testing
-cmd/mocker/daemon.go     - Daemon mode (background)
+main.go/loadtest.go   - Comando load testing
+main.go/daemon.go     - Daemon mode (background)
 pkg/cli/completion.go    - Shell completion (bash/zsh/fish)
 ```
 
 **Implementación detallada:**
 
 #### Tarea 4.2.1: Load Testing Command
-- **Archivo**: `cmd/mocker/loadtest.go`
+- **Archivo**: `main.go/loadtest.go`
 - **Comando**: `mocker load-test`
 - **Flags**:
   - `--rps` (int): Requests per second
@@ -464,7 +464,7 @@ pkg/cli/completion.go    - Shell completion (bash/zsh/fish)
 - **Output**: Real-time metrics durante test
 
 #### Tarea 4.2.2: Chaos Command
-- **Archivo**: `cmd/mocker/chaos.go`
+- **Archivo**: `main.go/chaos.go`
 - **Comando**: `mocker chaos`
 - **Subcomandos**:
   - `chaos start --scenario <name>`: Start chaos scenario
@@ -473,7 +473,7 @@ pkg/cli/completion.go    - Shell completion (bash/zsh/fish)
 - **Interactive mode**: Para configurar scenarios
 
 #### Tarea 4.2.3: Record/Replay Commands
-- **Archivo**: `cmd/mocker/record.go`
+- **Archivo**: `main.go/record.go`
 - **Comandos**:
   - `mocker record --target <url>`: Start recording
   - `mocker replay <recording-file>`: Replay traffic
@@ -765,7 +765,7 @@ test/examples/         - Example OpenAPI specs
 ### **Archivos Implementados:**
 ```
 ✅ pkg/cli/tui.go              - TUI framework completo con bubbletea (720 líneas)
-✅ cmd/mocker/tui.go           - Comando CLI 'mocker tui' con flags (209 líneas)
+✅ main.go/tui.go           - Comando CLI 'mocker tui' con flags (209 líneas)
 ✅ pkg/cli/tui_test.go         - Suite de tests unitarios (362 líneas)
 ✅ examples/tui-config.yaml    - Configuración optimizada para TUI (167 líneas)
 ✅ go.mod                      - Dependencia bubbletea agregada + lipgloss
@@ -1011,8 +1011,8 @@ kubectl apply -f examples/k8s/ -n vanta-system
 ✅ pkg/chaos/faults_test.go  - Tests del inyector de errores
 ✅ pkg/api/middleware.go     - Middleware Chaos() integrado al stack
 ✅ pkg/api/server.go         - Integración del chaos engine en el servidor
-✅ cmd/mocker/chaos.go       - CLI completo con subcomandos (start, stop, status, list)
-✅ cmd/mocker/main.go        - Integración del comando chaos
+✅ main.go/chaos.go       - CLI completo con subcomandos (start, stop, status, list)
+✅ main.go/main.go        - Integración del comando chaos
 ✅ examples/chaos-config.yaml - Configuración de ejemplo con 5 escenarios
 ```
 

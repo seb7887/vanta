@@ -1,6 +1,6 @@
 server:
     port: 8080
-    host: 0.0.0.0
+    host: "0.0.0.0"
     read_timeout: 30s
     write_timeout: 30s
     max_conns_per_ip: 100

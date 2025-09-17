@@ -97,16 +97,16 @@ jobs:
           ${{ runner.os }}-go-
 
     - name: Build for current platform
-      run: go build -v ./cmd/mocker
+      run: go build -v ./main.go
 
     - name: Build for all platforms (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'
       run: |
-        GOOS=linux GOARCH=amd64 go build -o build/vanta-linux-amd64 ./cmd/mocker
-        GOOS=linux GOARCH=arm64 go build -o build/vanta-linux-arm64 ./cmd/mocker
-        GOOS=darwin GOARCH=amd64 go build -o build/vanta-darwin-amd64 ./cmd/mocker
-        GOOS=darwin GOARCH=arm64 go build -o build/vanta-darwin-arm64 ./cmd/mocker
-        GOOS=windows GOARCH=amd64 go build -o build/vanta-windows-amd64.exe ./cmd/mocker
+        GOOS=linux GOARCH=amd64 go build -o build/vanta-linux-amd64 ./main.go
+        GOOS=linux GOARCH=arm64 go build -o build/vanta-linux-arm64 ./main.go
+        GOOS=darwin GOARCH=amd64 go build -o build/vanta-darwin-amd64 ./main.go
+        GOOS=darwin GOARCH=arm64 go build -o build/vanta-darwin-arm64 ./main.go
+        GOOS=windows GOARCH=amd64 go build -o build/vanta-windows-amd64.exe ./main.go
 
     - name: Upload build artifacts (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'

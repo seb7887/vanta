@@ -67,7 +67,7 @@ Prerequisites: Go 1.25+
 
 **Full version with all commands:**
 ```bash
-go install github.com/seb7887/vanta/cmd/mocker@latest
+go install github.com/seb7887/vanta@latest
 ```
 
 **Quick install (convenience wrapper):**
@@ -84,7 +84,7 @@ Prerequisites: Go 1.25+
 git clone <your-repo-url> vanta && cd vanta
 make build            # outputs bin/vanta
 # or
-go install ./cmd/mocker
+go install ./main.go
 ```
 
 ### Docker

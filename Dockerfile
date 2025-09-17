@@ -24,7 +24,7 @@ ARG BUILD_TIME=unknown
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -a -installsuffix cgo \
     -ldflags="-w -s -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.buildTime=${BUILD_TIME}" \
-    -o vanta ./cmd/mocker
+    -o vanta ./main.go
 
 # Final stage
 FROM alpine:3.19

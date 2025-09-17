@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 )
@@ -30,10 +31,27 @@ func LoadFromFile(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	// Unmarshal into config struct
+	// Get all settings as a map
+	settings := v.AllSettings()
+
+	// Unmarshal into config struct with custom decode hooks for duration parsing
 	var cfg Config
-	if err := v.Unmarshal(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	decoderConfig := &mapstructure.DecoderConfig{
+		DecodeHook: mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+		),
+		Result:           &cfg,
+		TagName:          "yaml",
+		WeaklyTypedInput: true,
+	}
+
+	decoder, err := mapstructure.NewDecoder(decoderConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create decoder: %w", err)
+	}
+
+	if err := decoder.Decode(settings); err != nil {
+		return nil, fmt.Errorf("failed to decode config: %w", err)
 	}
 
 	return &cfg, nil
@@ -63,8 +81,8 @@ func setDefaults(v *viper.Viper) {
 	// Server defaults - use time.Duration values for proper parsing
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("server.host", "0.0.0.0")
-	v.SetDefault("server.read_timeout", time.Duration(30*time.Second))
-	v.SetDefault("server.write_timeout", time.Duration(30*time.Second))
+	v.SetDefault("server.read_timeout", 30*time.Second)
+	v.SetDefault("server.write_timeout", 30*time.Second)
 	v.SetDefault("server.max_conns_per_ip", 100)
 	v.SetDefault("server.max_request_size", "10MB")
 	v.SetDefault("server.concurrency", 256000)

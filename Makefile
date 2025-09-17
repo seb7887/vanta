@@ -48,7 +48,7 @@ clean:
 
 install: build
 	@echo "Installing vanta..."
-	@go install -ldflags="$(LDFLAGS)" ./cmd/mocker
+	@go install -ldflags="$(LDFLAGS)" ./main.go
 
 deps-update:
 	@echo "Updating dependencies..."

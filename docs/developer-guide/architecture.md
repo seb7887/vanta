@@ -47,7 +47,7 @@ Vanta is designed as a modular, high-performance OpenAPI mock server built on to
 
 ## Core Components
 
-### 1. CLI Layer (`cmd/mocker/`)
+### 1. CLI Layer (`main.go/`)
 
 The command-line interface provides multiple commands for different use cases:
 

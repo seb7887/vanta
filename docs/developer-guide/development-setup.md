@@ -133,7 +133,7 @@ Create `.vscode/launch.json` for debugging:
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "./cmd/mocker",
+            "program": "./main.go",
             "args": [
                 "start",
                 "--spec", "examples/petstore.yaml",
@@ -147,7 +147,7 @@ Create `.vscode/launch.json` for debugging:
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "./cmd/mocker",
+            "program": "./main.go",
             "args": [
                 "tui",
                 "--spec", "examples/petstore.yaml",

@@ -424,7 +424,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-w -s" \
     -a -installsuffix cgo \
-    -o vanta ./cmd/mocker
+    -o vanta ./main.go
 
 FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /build/vanta /usr/local/bin/

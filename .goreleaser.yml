@@ -7,7 +7,7 @@ project_name: vanta
 builds:
   - id: vanta
     binary: vanta
-    main: ./cmd/mocker
+    main: ./main.go
     env:
       - CGO_ENABLED=0
     goos:
