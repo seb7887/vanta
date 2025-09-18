@@ -1,10 +1,10 @@
-# Vanta CLI - Tutorial Completo de Testing
+# Vanta CLI - Complete Testing Tutorial
 
-Este tutorial te guiará paso a paso para testear todas las funcionalidades del CLI de Vanta usando la especificación OpenAPI comprehensiva incluida.
+This tutorial will guide you step by step to test all Vanta CLI functionalities using the comprehensive OpenAPI specification included.
 
-## Índice
+## Table of Contents
 
-- [Configuración Inicial](#configuración-inicial)
+- [Initial Setup](#initial-setup)
 - [1. Command: start](#1-command-start)
 - [2. Command: config](#2-command-config)
 - [3. Command: validate](#3-command-validate)
@@ -13,36 +13,36 @@ Este tutorial te guiará paso a paso para testear todas las funcionalidades del 
 - [6. Command: state](#6-command-state)
 - [7. Command: tui](#7-command-tui)
 - [8. Command: version](#8-command-version)
-- [Testing Avanzado](#testing-avanzado)
+- [Advanced Testing](#advanced-testing)
 - [Troubleshooting](#troubleshooting)
 
-## Configuración Inicial
+## Initial Setup
 
-### Prerequisitos
+### Prerequisites
 
-1. **Instalar Vanta CLI**: Asegúrate de tener el binario `vanta` compilado y en tu PATH
-2. **Archivos de test**: Usa los archivos incluidos en este repositorio
-3. **Tools adicionales**: curl, jq (opcional para parsing JSON), httpie (opcional)
+1. **Install Vanta CLI**: Make sure you have the `vanta` binary compiled and in your PATH
+2. **Test files**: Use the files included in this repository
+3. **Additional tools**: curl, jq (optional for JSON parsing), httpie (optional)
 
-### Archivos de Testing
+### Testing Files
 
 ```bash
-# Navegue al directorio del proyecto
+# Navigate to the project directory
 cd /path/to/vanta
 
-# Verifique que los archivos de testing estén disponibles
-ls spec/vanta-test-api.yaml          # Especificación OpenAPI comprehensiva
-ls examples/                         # Configuraciones de ejemplo
-ls vanta.yaml                       # Configuración base
+# Verify that testing files are available
+ls spec/vanta-test-api.yaml          # Comprehensive OpenAPI specification
+ls examples/                         # Example configurations
+ls vanta.yaml                       # Base configuration
 ```
 
-### Verificación Básica
+### Basic Verification
 
 ```bash
-# Verificar que Vanta CLI esté instalado correctamente
+# Verify that Vanta CLI is installed correctly
 vanta version
 
-# Salida esperada:
+# Expected output:
 # Version: v1.0.0
 # Commit: abc1234
 # Build Time: 2025-01-15T10:00:00Z
@@ -52,34 +52,34 @@ vanta version
 
 ## 1. Command: start
 
-El comando `start` es el comando principal para iniciar el servidor mock.
+The `start` command is the main command to start the mock server.
 
-### 1.1 Inicio Básico
+### 1.1 Basic Start
 
 ```bash
-# Iniciar servidor con la especificación de testing
+# Start server with testing specification
 vanta start spec/vanta-test-api.yaml
 
-# Salida esperada:
+# Expected output:
 # INFO: Starting vanta server spec=spec/vanta-test-api.yaml port=8080 host=0.0.0.0
 # INFO: Server created successfully, starting...
 # INFO: Server running on http://0.0.0.0:8080
 ```
 
-**Comportamiento esperado:**
-- El servidor debe iniciarse en el puerto 8080
-- Debe cargar la especificación OpenAPI sin errores
-- Los endpoints deben estar disponibles según la spec
+**Expected behavior:**
+- The server should start on port 8080
+- Should load the OpenAPI specification without errors
+- Endpoints should be available according to the spec
 
-### 1.2 Verificar Endpoints Básicos
+### 1.2 Verify Basic Endpoints
 
-En otra terminal, mientras el servidor corre:
+In another terminal, while the server is running:
 
 ```bash
 # Test health endpoint
 curl http://localhost:8080/health
 
-# Salida esperada (JSON):
+# Expected output (JSON):
 {
   "status": "healthy",
   "timestamp": "2025-01-15T10:30:00Z",
@@ -90,7 +90,7 @@ curl http://localhost:8080/health
 # Test metrics endpoint
 curl http://localhost:8080/metrics
 
-# Salida esperada (JSON con métricas del servidor):
+# Expected output (JSON with server metrics):
 {
   "requests_total": 1,
   "requests_per_second": 0.1,
@@ -104,12 +104,12 @@ curl http://localhost:8080/metrics
 }
 ```
 
-### 1.3 Test con Configuración Personalizada
+### 1.3 Test with Custom Configuration
 
 ```bash
-# Detener el servidor anterior (Ctrl+C)
+# Stop the previous server (Ctrl+C)
 
-# Crear configuración de testing personalizada
+# Create custom testing configuration
 cat > test-config.yaml << EOF
 server:
   port: 9090
@@ -124,37 +124,37 @@ logging:
   format: "text"
 EOF
 
-# Iniciar con configuración personalizada
+# Start with custom configuration
 vanta start spec/vanta-test-api.yaml --config test-config.yaml --port 9090
 
-# Salida esperada:
+# Expected output:
 # DEBUG: Loading configuration from file file=test-config.yaml
 # INFO: Starting vanta server spec=spec/vanta-test-api.yaml port=9090 host=127.0.0.1
 # DEBUG: Using Spanish locale for data generation
 # INFO: Server running on http://127.0.0.1:9090
 ```
 
-### 1.4 Test con Parámetros de Línea de Comandos
+### 1.4 Test with Command Line Parameters
 
 ```bash
-# Iniciar con overrides por CLI
+# Start with CLI overrides
 vanta start spec/vanta-test-api.yaml \
   --port 8888 \
   --host localhost \
   --config test-config.yaml
 
-# Verificar que los parámetros CLI tienen prioridad
+# Verify that CLI parameters take priority
 curl http://localhost:8888/health
-# Debe responder en puerto 8888, no 9090
+# Should respond on port 8888, not 9090
 ```
 
-### 1.5 Test de Datos Generados
+### 1.5 Test Generated Data
 
 ```bash
-# Test endpoint de usuarios (debe generar datos mock)
+# Test users endpoint (should generate mock data)
 curl http://localhost:8080/users
 
-# Salida esperada (array de usuarios generados):
+# Expected output (array of generated users):
 {
   "users": [
     {
@@ -182,62 +182,62 @@ curl http://localhost:8080/users
   }
 }
 
-# Test endpoint de productos con parámetros
+# Test products endpoint with parameters
 curl "http://localhost:8080/products?category=electronics&min_price=100"
 
-# Debe filtrar productos según parámetros de query
+# Should filter products according to query parameters
 ```
 
 ---
 
 ## 2. Command: config
 
-El comando `config` gestiona archivos de configuración.
+The `config` command manages configuration files.
 
-### 2.1 Inicializar Configuración
+### 2.1 Initialize Configuration
 
 ```bash
-# Crear nueva configuración
+# Create new configuration
 vanta config init --output my-config.yaml
 
-# Salida esperada:
+# Expected output:
 # Configuration file created: my-config.yaml
 
-# Verificar contenido
+# Verify content
 cat my-config.yaml
 
-# Debe mostrar configuración YAML completa con valores por defecto
+# Should display complete YAML configuration with default values
 ```
 
-### 2.2 Validar Configuración
+### 2.2 Validate Configuration
 
 ```bash
-# Validar configuración existente
+# Validate existing configuration
 vanta config validate vanta.yaml
 
-# Salida esperada:
+# Expected output:
 # Configuration file is valid: vanta.yaml
 
-# Test con configuración inválida
+# Test with invalid configuration
 cat > invalid-config.yaml << EOF
 server:
-  port: "invalid"  # Error: debe ser número
-  host: 123        # Error: debe ser string
+  port: "invalid"  # Error: must be a number
+  host: 123        # Error: must be a string
 EOF
 
 vanta config validate invalid-config.yaml
 
-# Salida esperada (con error):
+# Expected output (with error):
 # Error: configuration validation failed: port must be a number
 ```
 
-### 2.3 Editar Configuración
+### 2.3 Edit Configuration
 
 ```bash
-# Intentar editar configuración
+# Attempt to edit configuration
 vanta config edit my-config.yaml
 
-# Salida esperada:
+# Expected output:
 # Opening /path/to/my-config.yaml in vi...
 # Note: Interactive editing is not yet implemented in this version.
 # Please manually edit the file: /path/to/my-config.yaml
@@ -247,15 +247,15 @@ vanta config edit my-config.yaml
 
 ## 3. Command: validate
 
-El comando `validate` valida especificaciones OpenAPI y genera reportes.
+The `validate` command validates OpenAPI specifications and generates reports.
 
-### 3.1 Validar Especificación
+### 3.1 Validate Specification
 
 ```bash
-# Validar especificación de testing
+# Validate testing specification
 vanta validate spec spec/vanta-test-api.yaml
 
-# Salida esperada:
+# Expected output:
 # OpenAPI Specification Validation
 # ================================
 #
@@ -265,10 +265,10 @@ vanta validate spec spec/vanta-test-api.yaml
 # Endpoints: 25
 # Schemas: 35
 
-# Test en formato JSON
+# Test in JSON format
 vanta validate spec spec/vanta-test-api.yaml --format json
 
-# Salida esperada (JSON estructurado):
+# Expected output (structured JSON):
 {
   "valid": true,
   "errors": [],
@@ -282,31 +282,31 @@ vanta validate spec spec/vanta-test-api.yaml --format json
 }
 ```
 
-### 3.2 Validar con Modo Estricto
+### 3.2 Validate with Strict Mode
 
 ```bash
-# Validar en modo estricto
+# Validate in strict mode
 vanta validate spec spec/vanta-test-api.yaml --strict --examples
 
-# Debe validar también todos los ejemplos en la especificación
+# Should also validate all examples in the specification
 ```
 
-### 3.3 Generar Reporte de Cobertura
+### 3.3 Generate Coverage Report
 
 ```bash
-# Primero, iniciar servidor para generar tráfico
+# First, start server to generate traffic
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 
-# Generar algo de tráfico para testing de cobertura
+# Generate some traffic for coverage testing
 curl http://localhost:8080/health
 curl http://localhost:8080/users
 curl http://localhost:8080/products
 
-# Generar reporte de cobertura
+# Generate coverage report
 vanta validate coverage spec/vanta-test-api.yaml
 
-# Salida esperada:
+# Expected output:
 # API Coverage Report
 # ===================
 #
@@ -320,17 +320,17 @@ vanta validate coverage spec/vanta-test-api.yaml
 #   POST /users - NOT COVERED (0 requests)
 #   ...
 
-# Detener servidor
+# Stop server
 kill $SERVER_PID
 ```
 
-### 3.4 Generar Reporte de Compliance
+### 3.4 Generate Compliance Report
 
 ```bash
-# Generar reporte de compliance
+# Generate compliance report
 vanta validate compliance spec/vanta-test-api.yaml --format json
 
-# Salida esperada (JSON):
+# Expected output (JSON):
 {
   "compliance_percent": 95.5,
   "total_requests": 100,
@@ -352,15 +352,15 @@ vanta validate compliance spec/vanta-test-api.yaml --format json
 
 ## 4. Command: record
 
-El comando `record` permite grabar y reproducir tráfico HTTP.
+The `record` command allows recording and replaying HTTP traffic.
 
-### 4.1 Iniciar Grabación
+### 4.1 Start Recording
 
 ```bash
-# Iniciar grabación básica
+# Start basic recording
 vanta record start
 
-# Salida esperada:
+# Expected output:
 # 🎬 Starting recording...
 # ✅ Recording enabled
 # 📁 Storage directory: ./recordings
@@ -369,17 +369,17 @@ vanta record start
 # 🔍 Filters: 0 configured
 ```
 
-### 4.2 Grabación con Filtros
+### 4.2 Recording with Filters
 
 ```bash
-# Iniciar grabación con filtros específicos
+# Start recording with specific filters
 vanta record start \
   --filter "method:GET" \
   --filter "endpoint:/users" \
   --output ./my-recordings \
   --max-recordings 100
 
-# Salida esperada:
+# Expected output:
 # 🎬 Starting recording...
 # ✅ Recording enabled
 # 📁 Storage directory: ./my-recordings
@@ -388,12 +388,12 @@ vanta record start \
 # 🔍 Filters: 2 configured
 ```
 
-### 4.3 Generar Tráfico para Grabación
+### 4.3 Generate Traffic for Recording
 
-Con la grabación activa, en otra terminal:
+With recording active, in another terminal:
 
 ```bash
-# Generar tráfico variado
+# Generate varied traffic
 curl -X GET http://localhost:8080/users
 curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
@@ -402,13 +402,13 @@ curl -X GET http://localhost:8080/products?category=electronics
 curl -X GET http://localhost:8080/health
 ```
 
-### 4.4 Listar Grabaciones
+### 4.4 List Recordings
 
 ```bash
-# Listar todas las grabaciones
+# List all recordings
 vanta record list
 
-# Salida esperada:
+# Expected output:
 # 📋 Found 4 recordings:
 #
 # ID                                       METHOD   URI                              STATUS TIMESTAMP
@@ -418,20 +418,20 @@ vanta record list
 # ghi789def012...                         GET      /products?category=electronics   200    2025-01-15 10:30:10
 # jkl012ghi345...                         GET      /health                          200    2025-01-15 10:30:15
 
-# Listar con filtros
+# List with filters
 vanta record list --method GET --limit 2
 
-# Listar grabaciones recientes
+# List recent recordings
 vanta record list --since 1h
 ```
 
-### 4.5 Ver Detalles de Grabación
+### 4.5 View Recording Details
 
 ```bash
-# Ver detalles de una grabación específica
+# View details of a specific recording
 vanta record show abc123def456...
 
-# Salida esperada:
+# Expected output:
 # 🎬 Recording Details
 #
 # ID:        abc123def456...
@@ -459,28 +459,28 @@ vanta record show abc123def456...
 #   Client IP: 127.0.0.1
 ```
 
-### 4.6 Detener Grabación
+### 4.6 Stop Recording
 
 ```bash
-# Detener grabación activa
+# Stop active recording
 vanta record stop
 
-# Salida esperada:
+# Expected output:
 # ⏹️  Stopping recording...
 # ✅ Recording stopped
 ```
 
-### 4.7 Reproducir Grabaciones
+### 4.7 Replay Recordings
 
 ```bash
-# Iniciar servidor de destino para replay (en otro puerto)
+# Start target server for replay (on another port)
 vanta start spec/vanta-test-api.yaml --port 8081 &
 REPLAY_SERVER_PID=$!
 
-# Reproducir todas las grabaciones
+# Replay all recordings
 vanta record replay --target http://localhost:8081
 
-# Salida esperada:
+# Expected output:
 # 🔄 Starting replay to http://localhost:8081...
 # 📋 Loaded 4 recordings for replay
 #
@@ -491,52 +491,52 @@ vanta record replay --target http://localhost:8081
 #    Average latency: 15ms
 #    Duration: 2.5s
 
-# Reproducir grabaciones específicas
+# Replay specific recordings
 vanta record replay \
   --target http://localhost:8081 \
   --ids abc123def456,def456abc789 \
   --concurrency 2 \
   --delay 500ms
 
-# Detener servidor de replay
+# Stop replay server
 kill $REPLAY_SERVER_PID
 ```
 
-### 4.8 Exportar Grabaciones
+### 4.8 Export Recordings
 
 ```bash
-# Exportar a formato HAR
+# Export to HAR format
 vanta record export --format har --output recordings.har
 
-# Exportar a colección Postman
+# Export to Postman collection
 vanta record export --format postman --output collection.json
 
-# Exportar como comandos cURL
+# Export as cURL commands
 vanta record export --format curl --output commands.sh
 
-# Salida esperada:
+# Expected output:
 # 📤 Exporting recordings in curl format...
 # 📋 Loaded 4 recordings for export
 # Export completed: commands.sh
 ```
 
-### 4.9 Eliminar Grabaciones
+### 4.9 Delete Recordings
 
 ```bash
-# Eliminar grabación específica
+# Delete specific recording
 vanta record delete abc123def456...
 
-# Salida esperada:
+# Expected output:
 # ✅ Deleted recording abc123def456...
 
-# Eliminar todas las grabaciones (con confirmación)
+# Delete all recordings (with confirmation)
 vanta record delete --all
 
-# Salida esperada:
+# Expected output:
 # ⚠️  Are you sure you want to delete ALL recordings? (y/N): y
 # ✅ All recordings deleted
 
-# Eliminar sin confirmación
+# Delete without confirmation
 vanta record delete --all --force
 ```
 
@@ -544,11 +544,11 @@ vanta record delete --all --force
 
 ## 5. Command: chaos
 
-El comando `chaos` implementa chaos engineering para testear resiliencia.
+The `chaos` command implements chaos engineering to test resilience.
 
-### 5.1 Configurar Scenarios de Chaos
+### 5.1 Configure Chaos Scenarios
 
-Primero, crear configuración de chaos:
+First, create chaos configuration:
 
 ```bash
 cat > chaos-config.yaml << EOF
@@ -584,13 +584,13 @@ logging:
 EOF
 ```
 
-### 5.2 Listar Scenarios Disponibles
+### 5.2 List Available Scenarios
 
 ```bash
-# Listar scenarios configurados
+# List configured scenarios
 vanta chaos list --config chaos-config.yaml
 
-# Salida esperada:
+# Expected output:
 # 📋 Available Chaos Scenarios
 #
 # 🎯 api_latency
@@ -617,47 +617,47 @@ vanta chaos list --config chaos-config.yaml
 #      min_delay: 1s
 ```
 
-### 5.3 Iniciar Chaos Testing
+### 5.3 Start Chaos Testing
 
 ```bash
-# Iniciar todos los scenarios
+# Start all scenarios
 vanta chaos start --config chaos-config.yaml
 
-# Salida esperada:
+# Expected output:
 # ✅ Chaos testing started with 3 scenario(s)
 #   - api_latency (latency): 30.0% probability on [/users /products]
 #   - random_errors (error): 10.0% probability on [/users/* /products/*]
 #   - slow_database (latency): 20.0% probability on [/analytics/*]
 # ♾️  Running indefinitely (Ctrl+C to stop)
 
-# En otra terminal, generar tráfico para observar efectos de chaos
+# In another terminal, generate traffic to observe chaos effects
 for i in {1..20}; do
   echo "Request $i:"
   time curl -s http://localhost:8080/users | jq '.users | length'
   sleep 1
 done
 
-# Debería observar:
-# - Algunos requests con latencia adicional (100ms-2s)
-# - Algunos requests fallando con errores 500/502/503
-# - Variación en tiempos de respuesta
+# Should observe:
+# - Some requests with additional latency (100ms-2s)
+# - Some requests failing with 500/502/503 errors
+# - Variation in response times
 ```
 
-### 5.4 Iniciar Scenario Específico
+### 5.4 Start Specific Scenario
 
 ```bash
-# Iniciar solo scenario de latencia por 5 minutos
+# Start only latency scenario for 5 minutes
 vanta chaos start \
   --config chaos-config.yaml \
   --scenario api_latency \
   --duration 5m
 
-# Salida esperada:
+# Expected output:
 # ✅ Chaos testing started with 1 scenario(s)
 #   - api_latency (latency): 30.0% probability on [/users /products]
 # ⏰ Will run for 5m0s
 #
-# [después de 5 minutos]
+# [after 5 minutes]
 # ⏰ Duration elapsed, stopping chaos testing
 #
 # 📊 Final Statistics:
@@ -668,13 +668,13 @@ vanta chaos start \
 # ✅ Chaos testing stopped
 ```
 
-### 5.5 Verificar Estado de Chaos
+### 5.5 Verify Chaos Status
 
 ```bash
-# Ver estado actual de chaos testing
+# View current chaos testing status
 vanta chaos status --config chaos-config.yaml
 
-# Salida esperada:
+# Expected output:
 # 📋 Chaos Testing Status
 #
 # Configuration file: chaos-config.yaml
@@ -698,13 +698,13 @@ vanta chaos status --config chaos-config.yaml
 #      Parameters: map[max_delay:5s min_delay:1s]
 ```
 
-### 5.6 Parar Chaos Testing
+### 5.6 Stop Chaos Testing
 
 ```bash
-# Parar chaos testing activo
+# Stop active chaos testing
 vanta chaos stop
 
-# Salida esperada:
+# Expected output:
 # 🛑 Chaos testing stop signal sent
 # 💡 Note: To stop chaos testing on a running server, restart the server or use configuration hot-reload
 ```
@@ -713,96 +713,96 @@ vanta chaos stop
 
 ## 6. Command: state
 
-El comando `state` gestiona el estado del servidor mock.
+The `state` command manages the mock server state.
 
-### 6.1 Configurar State Management
+### 6.1 Configure State Management
 
 ```bash
-# Iniciar servidor con state habilitado
+# Start server with state enabled
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 
-# Dar tiempo al servidor para inicializar
+# Give the server time to initialize
 sleep 2
 ```
 
-### 6.2 Establecer Valores en State
+### 6.2 Set State Values
 
 ```bash
-# Establecer valor simple
+# Set simple value
 vanta state set user_count 1000
 
-# Salida esperada:
+# Expected output:
 # Successfully set user_count = 1000
 
-# Establecer valor JSON
+# Set JSON value
 vanta state set current_user '{"id":1,"name":"Admin","role":"admin"}'
 
-# Salida esperada:
+# Expected output:
 # Successfully set current_user = map[id:1 name:Admin role:admin]
 
-# Establecer valor desde archivo
+# Set value from file
 echo '{"feature_flags":{"new_ui":true,"beta_features":false}}' > features.json
 vanta state set app_config --file features.json
 
-# Establecer valor con TTL
+# Set value with TTL
 vanta state set session_token "abc123xyz" --ttl 1h
 
-# Salida esperada:
+# Expected output:
 # Successfully set session_token = abc123xyz
 # with TTL: 1h0m0s
 
-# Establecer valor en scope específico
+# Set value in specific scope
 vanta state set last_login "2025-01-15T10:30:00Z" --scope user:123
 
-# Salida esperada:
+# Expected output:
 # Successfully set last_login = 2025-01-15T10:30:00Z
 # in scope: user:123
 ```
 
-### 6.3 Obtener Valores del State
+### 6.3 Get State Values
 
 ```bash
-# Obtener valor simple
+# Get simple value
 vanta state get user_count
 
-# Salida esperada (formato pretty por defecto):
+# Expected output (pretty format by default):
 {
   "key": "user_count",
   "scope": "",
   "value": 1000
 }
 
-# Obtener valor en formato raw
+# Get value in raw format
 vanta state get user_count --format raw
 
-# Salida esperada:
+# Expected output:
 # 1000
 
-# Obtener valor en formato JSON
+# Get value in JSON format
 vanta state get current_user --format json
 
-# Salida esperada:
+# Expected output:
 {
   "id": 1,
   "name": "Admin",
   "role": "admin"
 }
 
-# Obtener valor de scope específico
+# Get value from specific scope
 vanta state get last_login --scope user:123
 
-# Obtener valor y guardar en archivo
+# Get value and save to file
 vanta state get app_config --output config-backup.json
 ```
 
-### 6.4 Listar Claves del State
+### 6.4 List State Keys
 
 ```bash
-# Listar todas las claves
+# List all keys
 vanta state list
 
-# Salida esperada:
+# Expected output:
 {
   "keys": [
     "user_count",
@@ -813,19 +813,19 @@ vanta state list
   "count": 4
 }
 
-# Listar en formato texto
+# List in text format
 vanta state list --format text
 
-# Salida esperada:
+# Expected output:
 # user_count
 # current_user
 # app_config
 # session_token
 
-# Listar scopes disponibles
+# List available scopes
 vanta state list --scope
 
-# Salida esperada:
+# Expected output:
 {
   "scopes": [
     "user:123"
@@ -833,85 +833,85 @@ vanta state list --scope
 }
 ```
 
-### 6.5 Eliminar Valores del State
+### 6.5 Delete State Values
 
 ```bash
-# Eliminar clave específica
+# Delete specific key
 vanta state delete session_token
 
-# Salida esperada:
+# Expected output:
 # Successfully deleted key: session_token
 
-# Eliminar clave de scope específico
+# Delete key from specific scope
 vanta state delete last_login --scope user:123
 
-# Salida esperada:
+# Expected output:
 # Successfully deleted key: last_login
 # from scope: user:123
 ```
 
-### 6.6 Limpiar State
+### 6.6 Clear State
 
 ```bash
-# Limpiar todo el state (con confirmación)
+# Clear all state (with confirmation)
 vanta state clear
 
-# Salida esperada:
+# Expected output:
 # This will permanently delete state data. Are you sure? (y/N): y
 # Successfully cleared all state
 
-# Limpiar sin confirmación
+# Clear without confirmation
 vanta state clear --yes
 
-# Limpiar scope específico
+# Clear specific scope
 vanta state clear --scope user:123 --yes
 
-# Salida esperada:
+# Expected output:
 # Successfully cleared scope: user:123
 ```
 
-### 6.7 Exportar/Importar State
+### 6.7 Export/Import State
 
 ```bash
-# Primero, establecer algunos datos de prueba
+# First, set some test data
 vanta state set test_data '{"key1":"value1","key2":"value2"}'
 vanta state set counter 42
 vanta state set enabled true
 
-# Exportar state completo
+# Export complete state
 vanta state export
 
-# Salida esperada:
+# Expected output:
 # State exported to: state_export_2025-01-15_10-30-45.json
 # Exported 3 keys
 
-# Exportar a archivo específico
+# Export to specific file
 vanta state export --output my-state-backup.json
 
-# Ver contenido del export
+# View export content
 cat my-state-backup.json
 
-# Limpiar state para test de import
+# Clear state for import test
 vanta state clear --yes
 
-# Importar state desde archivo
+# Import state from file
 vanta state import my-state-backup.json
 
-# Salida esperada:
+# Expected output:
 # Successfully imported state from: my-state-backup.json
 # Imported 3 keys
 # Existing state was replaced
 
-# Importar con merge (conservar estado existente)
+# Import with merge (preserve existing state)
 vanta state set new_key "new_value"
 vanta state import my-state-backup.json --merge
 
-# Salida esperada:
+# Expected output:
 # Successfully imported state from: my-state-backup.json
 # Imported 3 keys
 # State was merged with existing data
 
-# Detener servidor
+# Stop server
 kill $SERVER_PID
 ```
 
@@ -919,15 +919,15 @@ kill $SERVER_PID
 
 ## 7. Command: tui
 
-El comando `tui` lanza una interfaz de usuario en terminal interactiva.
+The `tui` command launches an interactive terminal user interface.
 
-### 7.1 Lanzar TUI Básico
+### 7.1 Launch Basic TUI
 
 ```bash
-# Lanzar TUI con configuración por defecto
+# Launch TUI with default configuration
 vanta tui
 
-# Salida esperada:
+# Expected output:
 # INFO: Starting TUI mode config=config.yaml spec= readonly=false
 # INFO: Launching Terminal UI...
 # INFO: TUI Controls:
@@ -939,68 +939,68 @@ vanta tui
 # [Se abre interfaz TUI interactiva]
 ```
 
-### 7.2 TUI con Especificación OpenAPI
+### 7.2 TUI with OpenAPI Specification
 
 ```bash
-# Lanzar TUI con especificación específica
+# Launch TUI with specific specification
 vanta tui --spec spec/vanta-test-api.yaml
 
-# Debería mostrar:
+# Should display:
 # - Panel de métricas en tiempo real
 # - Panel de logs con requests/responses
 # - Panel de configuración
 # - Panel de estado del servidor
 ```
 
-### 7.3 TUI en Modo Solo Lectura
+### 7.3 TUI in Read-Only Mode
 
 ```bash
-# Lanzar TUI sin edición de configuración
+# Launch TUI without configuration editing
 vanta tui --readonly --spec spec/vanta-test-api.yaml
 
-# El panel de configuración debe ser de solo lectura
+# Configuration panel should be read-only
 ```
 
-### 7.4 Navegación en TUI
+### 7.4 TUI Navigation
 
-**Controles de TUI a probar:**
+**TUI controls to test:**
 
-1. **Navegación entre paneles:**
+1. **Navigation between panels:**
    - `Tab` / `Shift+Tab`: Cambiar entre paneles
    - `q` o `Ctrl+C`: Salir
 
-2. **Panel de Logs:**
-   - `↑/↓`: Scroll por logs
-   - `f`: Filtrar logs
-   - `c`: Limpiar logs
-   - `Enter`: Ver detalles de log seleccionado
+2. **Logs Panel:**
+   - `↑/↓`: Scroll through logs
+   - `f`: Filter logs
+   - `c`: Clear logs
+   - `Enter`: View selected log details
 
-3. **Panel de Métricas:**
-   - Debe mostrar en tiempo real:
+3. **Metrics Panel:**
+   - Should display in real time:
      - RPS (Requests Per Second)
      - Latencia promedio
      - Códigos de error
-     - Uso de memoria
-     - Conexiones activas
+     - Memory usage
+     - Active connections
 
-4. **Panel de Configuración:**
-   - `↑/↓`: Navegar por opciones
-   - `Enter`: Editar valor (si no es readonly)
-   - `Ctrl+S`: Guardar cambios
-   - `Esc`: Cancelar edición
+4. **Configuration Panel:**
+   - `↑/↓`: Navigate through options
+   - `Enter`: Edit value (if not readonly)
+   - `Ctrl+S`: Save changes
+   - `Esc`: Cancel editing
 
-### 7.5 Generar Tráfico para TUI
+### 7.5 Generate Traffic for TUI
 
-Con TUI activo, en otra terminal:
+With TUI active, in another terminal:
 
 ```bash
-# Script para generar tráfico continuo
+# Script to generate continuous traffic
 for i in {1..100}; do
   curl -s http://localhost:8080/users > /dev/null &
   curl -s http://localhost:8080/products > /dev/null &
   curl -s http://localhost:8080/health > /dev/null &
 
-  # Algunos errores para testear métricas
+  # Some errors to test metrics
   if [ $((i % 10)) -eq 0 ]; then
     curl -s http://localhost:8080/test/error/500 > /dev/null &
   fi
@@ -1011,22 +1011,22 @@ done
 wait
 ```
 
-**Comportamiento esperado en TUI:**
-- Panel de métricas debe actualizar RPS, latencia, errores
-- Panel de logs debe mostrar requests entrantes
-- Contadores deben incrementar en tiempo real
+**Expected behavior in TUI:**
+- Metrics panel should update RPS, latency, errors
+- Logs panel should show incoming requests
+- Counters should increment in real time
 
 ---
 
 ## 8. Command: version
 
-### 8.1 Información de Versión
+### 8.1 Version Information
 
 ```bash
-# Mostrar información de versión
+# Show version information
 vanta version
 
-# Salida esperada:
+# Expected output:
 # Version: v1.0.0
 # Commit: abc1234def5678
 # Build Time: 2025-01-15T10:00:00Z
@@ -1036,19 +1036,19 @@ vanta version
 
 ---
 
-## Testing Avanzado
+## Advanced Testing
 
 ### Hot Reload Testing
 
 ```bash
-# Iniciar servidor con hot reload habilitado
+# Start server with hot reload enabled
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 
-# Modificar la especificación OpenAPI
+# Modify the OpenAPI specification
 cp spec/vanta-test-api.yaml spec/vanta-test-api-modified.yaml
 
-# Agregar nuevo endpoint
+# Add new endpoint
 cat >> spec/vanta-test-api-modified.yaml << EOF
   /test/new:
     get:
@@ -1066,8 +1066,8 @@ cat >> spec/vanta-test-api-modified.yaml << EOF
                     type: string
 EOF
 
-# El servidor debería detectar cambios automáticamente
-# Verificar nuevo endpoint
+# Server should detect changes automatically
+# Verify new endpoint
 curl http://localhost:8080/test/new
 
 kill $SERVER_PID
@@ -1076,7 +1076,7 @@ kill $SERVER_PID
 ### Plugin Testing
 
 ```bash
-# Crear configuración con plugins
+# Create configuration with plugins
 cat > plugin-config.yaml << EOF
 server:
   port: 8080
@@ -1103,7 +1103,7 @@ plugins:
       allowed_methods: ["GET", "POST", "PUT", "DELETE"]
 EOF
 
-# Iniciar con plugins
+# Start with plugins
 vanta start spec/vanta-test-api.yaml --config plugin-config.yaml
 
 # Test CORS headers
@@ -1113,24 +1113,24 @@ curl -H "Origin: https://example.com" \
      -X OPTIONS \
      http://localhost:8080/users
 
-# Debería incluir headers CORS en respuesta
+# Should include CORS headers in response
 
 # Test rate limiting
 for i in {1..70}; do
   curl -s http://localhost:8080/health
 done
 
-# Después de 60 requests, debería devolver 429 Too Many Requests
+# After 60 requests, should return 429 Too Many Requests
 ```
 
 ### Webhook Testing
 
 ```bash
-# Configurar webhook de prueba con ngrok o servidor local
+# Configure test webhook with ngrok or local server
 python3 -m http.server 9999 &
 WEBHOOK_SERVER_PID=$!
 
-# Crear webhook en la API
+# Create webhook in the API
 curl -X POST http://localhost:8080/webhooks \
   -H "Content-Type: application/json" \
   -d '{
@@ -1139,7 +1139,7 @@ curl -X POST http://localhost:8080/webhooks \
     "secret": "mysecretkey123"
   }'
 
-# Crear usuario para disparar webhook
+# Create user to trigger webhook
 curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
   -d '{
@@ -1149,14 +1149,14 @@ curl -X POST http://localhost:8080/users \
     "role": "user"
   }'
 
-# Verificar que webhook server recibió la notificación
+# Verify that webhook server received the notification
 kill $WEBHOOK_SERVER_PID
 ```
 
 ### Performance Testing
 
 ```bash
-# Usar herramientas como ab, wrk, o hey para performance testing
+# Use tools like ab, wrk, or hey for performance testing
 
 # Test con Apache Bench
 ab -n 1000 -c 10 http://localhost:8080/health
@@ -1167,14 +1167,14 @@ hey -n 1000 -c 10 http://localhost:8080/users
 # Test con curl en paralelo
 seq 1 100 | xargs -n1 -P10 -I{} curl -s http://localhost:8080/products > /dev/null
 
-# Verificar métricas durante testing
+# Verify metrics during testing
 curl http://localhost:8080/metrics
 ```
 
 ### Data Generation Testing
 
 ```bash
-# Test diferentes seeds para generación de datos
+# Test different seeds for data generation
 vanta start spec/vanta-test-api.yaml --config <(cat << EOF
 mock:
   seed: 42
@@ -1185,10 +1185,10 @@ mock:
 EOF
 ) &
 
-# Obtener datos con seed 42
+# Get data with seed 42
 curl http://localhost:8080/users > users_seed_42.json
 
-# Reiniciar con seed diferente
+# Restart with different seed
 pkill vanta
 vanta start spec/vanta-test-api.yaml --config <(cat << EOF
 mock:
@@ -1200,10 +1200,10 @@ mock:
 EOF
 ) &
 
-# Obtener datos con seed 99
+# Get data with seed 99
 curl http://localhost:8080/users > users_seed_99.json
 
-# Los datos deben ser diferentes pero consistentes por seed
+# Data should be different but consistent per seed
 diff users_seed_42.json users_seed_99.json
 ```
 
@@ -1211,66 +1211,66 @@ diff users_seed_42.json users_seed_99.json
 
 ## Troubleshooting
 
-### Problemas Comunes
+### Common Issues
 
-#### 1. Puerto en Uso
+#### 1. Port in Use
 
 ```bash
 # Error: "bind: address already in use"
-# Solución: Verificar qué proceso usa el puerto
+# Solution: Check which process is using the port
 lsof -i :8080
 kill <PID>
 
-# O usar puerto diferente
+# Or use different port
 vanta start spec/vanta-test-api.yaml --port 8081
 ```
 
-#### 2. Especificación OpenAPI Inválida
+#### 2. Invalid OpenAPI Specification
 
 ```bash
 # Error: "failed to parse OpenAPI spec"
-# Solución: Validar especificación primero
+# Solution: Validate specification first
 vanta validate spec spec/vanta-test-api.yaml
 
-# Verificar sintaxis YAML
+# Verify YAML syntax
 yamllint spec/vanta-test-api.yaml
 ```
 
-#### 3. Configuración Inválida
+#### 3. Invalid Configuration
 
 ```bash
 # Error: "configuration validation failed"
-# Solución: Validar configuración
+# Solution: Validate configuration
 vanta config validate my-config.yaml
 
-# Crear configuración limpia
+# Create clean configuration
 vanta config init --output clean-config.yaml
 ```
 
-#### 4. Permisos de Archivo
+#### 4. File Permissions
 
 ```bash
 # Error: "permission denied"
-# Solución: Verificar permisos
+# Solution: Check permissions
 ls -la spec/vanta-test-api.yaml
 chmod 644 spec/vanta-test-api.yaml
 ```
 
-#### 5. Estado Corrupto
+#### 5. Corrupted State
 
 ```bash
-# Error en state management
-# Solución: Limpiar estado
+# Error in state management
+# Solution: Clear state
 vanta state clear --yes
 
-# O reiniciar completamente
+# Or restart completely
 rm -rf ./recordings ./state
 ```
 
-### Logging y Debug
+### Logging and Debug
 
 ```bash
-# Iniciar con logging debug
+# Start with debug logging
 vanta start spec/vanta-test-api.yaml --config <(cat << EOF
 logging:
   level: "debug"
@@ -1280,18 +1280,18 @@ logging:
 EOF
 )
 
-# Verificar logs del sistema
+# Check system logs
 journalctl -f | grep vanta
 
-# Verificar recursos del sistema
+# Check system resources
 htop
 ps aux | grep vanta
 ```
 
-### Verificación de Health
+### Health Verification
 
 ```bash
-# Script para verificar estado del servidor
+# Script to verify server status
 check_health() {
   response=$(curl -s -w "%{http_code}" http://localhost:8080/health)
   http_code="${response: -3}"
@@ -1305,7 +1305,7 @@ check_health() {
   fi
 }
 
-# Verificar salud cada 5 segundos
+# Check health every 5 seconds
 while true; do
   check_health
   sleep 5
@@ -1314,27 +1314,27 @@ done
 
 ---
 
-## Resumen de Comandos
+## Command Summary
 
-| Comando | Funcionalidad | Ejemplo Básico |
+| Command | Functionality | Basic Example |
 |---------|---------------|----------------|
-| `start` | Iniciar servidor mock | `vanta start spec/vanta-test-api.yaml` |
-| `config` | Gestionar configuración | `vanta config init` |
-| `validate` | Validar specs y compliance | `vanta validate spec spec/vanta-test-api.yaml` |
-| `record` | Grabar/reproducir tráfico | `vanta record start` |
+| `start` | Start mock server | `vanta start spec/vanta-test-api.yaml` |
+| `config` | Manage configuration | `vanta config init` |
+| `validate` | Validate specs and compliance | `vanta validate spec spec/vanta-test-api.yaml` |
+| `record` | Record/replay traffic | `vanta record start` |
 | `chaos` | Chaos engineering | `vanta chaos start --config chaos.yaml` |
-| `state` | Gestionar estado | `vanta state set key value` |
-| `tui` | Interfaz terminal | `vanta tui --spec spec/vanta-test-api.yaml` |
-| `version` | Info de versión | `vanta version` |
+| `state` | Manage state | `vanta state set key value` |
+| `tui` | Terminal interface | `vanta tui --spec spec/vanta-test-api.yaml` |
+| `version` | Version info | `vanta version` |
 
 ---
 
-## Siguientes Pasos
+## Next Steps
 
-1. **Testing automatizado**: Crear scripts para automatizar estos tests
-2. **CI/CD Integration**: Integrar tests en pipeline de CI/CD
-3. **Monitoring**: Configurar monitoring en producción
-4. **Custom Plugins**: Desarrollar plugins personalizados
-5. **Load Testing**: Realizar tests de carga más exhaustivos
+1. **Automated testing**: Create scripts to automate these tests
+2. **CI/CD Integration**: Integrate tests into CI/CD pipeline
+3. **Monitoring**: Configure monitoring in production
+4. **Custom Plugins**: Develop custom plugins
+5. **Load Testing**: Perform more exhaustive load testing
 
-Para testing más específico, consulta el archivo `test-scenarios.md` que contiene casos de uso específicos y tests de regresión.
+For more specific testing, refer to the `test-scenarios.md` file which contains specific use cases and regression tests.

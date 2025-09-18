@@ -2,9 +2,9 @@ openapi: 3.0.3
 info:
   title: Vanta Test API - Comprehensive Testing Specification
   description: |
-    Una especificación OpenAPI comprehensiva diseñada específicamente para testear
-    todas las funcionalidades de Vanta CLI. Incluye diversos tipos de datos,
-    operaciones CRUD, autenticación, validaciones, webhooks y casos edge.
+    A comprehensive OpenAPI specification designed specifically for testing
+    all Vanta CLI functionalities. Includes various data types,
+    CRUD operations, authentication, validations, webhooks and edge cases.
   version: 1.0.0
   contact:
     name: Vanta Testing Team
@@ -28,13 +28,13 @@ paths:
   /health:
     get:
       summary: Health check endpoint
-      description: Endpoint básico para verificar estado del servidor
+      description: Basic endpoint to verify server status
       operationId: healthCheck
       tags: [System]
       security: []
       responses:
         '200':
-          description: Servidor saludable
+          description: Healthy server
           content:
             application/json:
               schema:
@@ -48,12 +48,12 @@ paths:
   /metrics:
     get:
       summary: Server metrics
-      description: Métricas del servidor para testing de TUI y monitoring
+      description: Server metrics for TUI testing and monitoring
       operationId: getMetrics
       tags: [System]
       responses:
         '200':
-          description: Métricas del servidor
+          description: Server metrics
           content:
             application/json:
               schema:
@@ -63,20 +63,20 @@ paths:
   /users:
     get:
       summary: List users
-      description: Obtener lista de usuarios con paginación y filtros
+      description: Get list of users with pagination and filters
       operationId: listUsers
       tags: [Users]
       parameters:
         - name: page
           in: query
-          description: Número de página
+          description: Page number
           schema:
             type: integer
             minimum: 1
             default: 1
         - name: limit
           in: query
-          description: Elementos por página
+          description: Items per page
           schema:
             type: integer
             minimum: 1
@@ -84,31 +84,31 @@ paths:
             default: 20
         - name: role
           in: query
-          description: Filtrar por rol
+          description: Filter by role
           schema:
             type: string
             enum: [admin, user, moderator]
         - name: active
           in: query
-          description: Filtrar por estado activo
+          description: Filter by active status
           schema:
             type: boolean
         - name: created_after
           in: query
-          description: Filtrar usuarios creados después de esta fecha
+          description: Filter users created after this date
           schema:
             type: string
             format: date-time
       responses:
         '200':
-          description: Lista de usuarios obtenida exitosamente
+          description: List of users obtained successfully
           headers:
             X-Total-Count:
-              description: Total de usuarios
+              description: Total number of users
               schema:
                 type: integer
             X-Page:
-              description: Página actual
+              description: Current page
               schema:
                 type: integer
           content:
@@ -150,7 +150,7 @@ paths:
 
     post:
       summary: Create user
-      description: Crear un nuevo usuario
+      description: Create a new user
       operationId: createUser
       tags: [Users]
       requestBody:
@@ -170,7 +170,7 @@ paths:
                 phone: "+1234567890"
       responses:
         '201':
-          description: Usuario creado exitosamente
+          description: User created successfully
           content:
             application/json:
               schema:
@@ -178,7 +178,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
-          description: Usuario ya existe
+          description: User already exists
           content:
             application/json:
               schema:
@@ -193,19 +193,19 @@ paths:
       - name: userId
         in: path
         required: true
-        description: ID del usuario
+        description: User ID
         schema:
           type: integer
           format: int64
           minimum: 1
     get:
       summary: Get user by ID
-      description: Obtener información detallada de un usuario
+      description: Get detailed information for a user
       operationId: getUserById
       tags: [Users]
       responses:
         '200':
-          description: Usuario encontrado
+          description: User found
           content:
             application/json:
               schema:
@@ -217,7 +217,7 @@ paths:
 
     put:
       summary: Update user
-      description: Actualizar información de usuario completa
+      description: Update complete user information
       operationId: updateUser
       tags: [Users]
       requestBody:
@@ -228,7 +228,7 @@ paths:
               $ref: '#/components/schemas/UserUpdate'
       responses:
         '200':
-          description: Usuario actualizado
+          description: User updated
           content:
             application/json:
               schema:
@@ -240,7 +240,7 @@ paths:
 
     patch:
       summary: Partially update user
-      description: Actualización parcial de usuario
+      description: Partial user update
       operationId: patchUser
       tags: [Users]
       requestBody:
@@ -251,7 +251,7 @@ paths:
               $ref: '#/components/schemas/UserPatch'
       responses:
         '200':
-          description: Usuario actualizado parcialmente
+          description: User partially updated
           content:
             application/json:
               schema:
@@ -263,16 +263,16 @@ paths:
 
     delete:
       summary: Delete user
-      description: Eliminar usuario (soft delete)
+      description: Delete user (soft delete)
       operationId: deleteUser
       tags: [Users]
       responses:
         '204':
-          description: Usuario eliminado exitosamente
+          description: User deleted successfully
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
-          description: No se puede eliminar usuario activo
+          description: Cannot delete active user
           content:
             application/json:
               schema:
@@ -282,53 +282,53 @@ paths:
   /products:
     get:
       summary: List products
-      description: Obtener catálogo de productos con búsqueda y filtros
+      description: Get product catalog with search and filters
       operationId: listProducts
       tags: [Products]
       security: []
       parameters:
         - name: search
           in: query
-          description: Búsqueda por nombre o descripción
+          description: Search by name or description
           schema:
             type: string
             minLength: 2
             maxLength: 100
         - name: category
           in: query
-          description: Filtrar por categoría
+          description: Filter by category
           schema:
             type: string
             enum: [electronics, clothing, books, home, sports]
         - name: min_price
           in: query
-          description: Precio mínimo
+          description: Minimum price
           schema:
             type: number
             format: float
             minimum: 0
         - name: max_price
           in: query
-          description: Precio máximo
+          description: Maximum price
           schema:
             type: number
             format: float
             minimum: 0
         - name: in_stock
           in: query
-          description: Solo productos en stock
+          description: Only products in stock
           schema:
             type: boolean
         - name: sort
           in: query
-          description: Ordenamiento
+          description: Sorting
           schema:
             type: string
             enum: [name_asc, name_desc, price_asc, price_desc, created_asc, created_desc]
             default: created_desc
       responses:
         '200':
-          description: Lista de productos
+          description: List of products
           content:
             application/json:
               schema:
@@ -355,7 +355,7 @@ paths:
 
     post:
       summary: Create product
-      description: Crear nuevo producto
+      description: Create new product
       operationId: createProduct
       tags: [Products]
       requestBody:
@@ -377,7 +377,7 @@ paths:
                     format: binary
       responses:
         '201':
-          description: Producto creado
+          description: Product created
           content:
             application/json:
               schema:
@@ -394,13 +394,13 @@ paths:
         example: "PR123456"
     get:
       summary: Get product details
-      description: Obtener detalles completos del producto
+      description: Get complete product details
       operationId: getProduct
       tags: [Products]
       security: []
       responses:
         '200':
-          description: Producto encontrado
+          description: Product found
           content:
             application/json:
               schema:
@@ -415,13 +415,13 @@ paths:
   /orders:
     get:
       summary: List orders
-      description: Obtener lista de órdenes del usuario
+      description: Get user's order list
       operationId: listOrders
       tags: [Orders]
       parameters:
         - name: status
           in: query
-          description: Filtrar por estado
+          description: Filter by status
           schema:
             type: array
             items:
@@ -441,7 +441,7 @@ paths:
             format: date
       responses:
         '200':
-          description: Lista de órdenes
+          description: List of orders
           content:
             application/json:
               schema:
@@ -451,7 +451,7 @@ paths:
 
     post:
       summary: Create order
-      description: Crear nueva orden
+      description: Create new order
       operationId: createOrder
       tags: [Orders]
       requestBody:
@@ -462,13 +462,13 @@ paths:
               $ref: '#/components/schemas/OrderCreate'
       responses:
         '201':
-          description: Orden creada
+          description: Order created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Order'
         '400':
-          description: Datos de orden inválidos
+          description: Invalid order data
           content:
             application/json:
               schema:
@@ -488,7 +488,7 @@ paths:
       tags: [Orders]
       responses:
         '200':
-          description: Detalles de la orden
+          description: Order details
           content:
             application/json:
               schema:
@@ -504,7 +504,7 @@ paths:
           format: uuid
     post:
       summary: Cancel order
-      description: Cancelar una orden existente
+      description: Cancel an existing order
       operationId: cancelOrder
       tags: [Orders]
       requestBody:
@@ -522,13 +522,13 @@ paths:
                   default: false
       responses:
         '200':
-          description: Orden cancelada
+          description: Order cancelled
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Order'
         '400':
-          description: No se puede cancelar la orden
+          description: Cannot cancel the order
           content:
             application/json:
               schema:
@@ -538,7 +538,7 @@ paths:
   /analytics/dashboard:
     get:
       summary: Get dashboard analytics
-      description: Datos para dashboard de analytics
+      description: Data for analytics dashboard
       operationId: getDashboardAnalytics
       tags: [Analytics]
       parameters:
@@ -553,11 +553,11 @@ paths:
           schema:
             type: string
             pattern: '^[A-Za-z_]+/[A-Za-z_]+$'
-            default: "UTC"
+            default: "UTC/UTC"
             example: "America/New_York"
       responses:
         '200':
-          description: Datos de analytics
+          description: Analytics data
           content:
             application/json:
               schema:
@@ -567,7 +567,7 @@ paths:
   /files/upload:
     post:
       summary: Upload file
-      description: Subir archivo al servidor
+      description: Upload file to server
       operationId: uploadFile
       tags: [Files]
       requestBody:
@@ -592,13 +592,13 @@ paths:
                 - file
       responses:
         '201':
-          description: Archivo subido exitosamente
+          description: File uploaded successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/FileUploadResponse'
         '413':
-          description: Archivo muy grande
+          description: File too large
           content:
             application/json:
               schema:
@@ -614,12 +614,12 @@ paths:
           format: uuid
     get:
       summary: Download file
-      description: Descargar archivo por ID
+      description: Download file by ID
       operationId: downloadFile
       tags: [Files]
       responses:
         '200':
-          description: Archivo encontrado
+          description: File found
           content:
             application/octet-stream:
               schema:
@@ -636,7 +636,7 @@ paths:
       tags: [Webhooks]
       responses:
         '200':
-          description: Lista de webhooks
+          description: List of webhooks
           content:
             application/json:
               schema:
@@ -656,7 +656,7 @@ paths:
               $ref: '#/components/schemas/WebhookCreate'
       responses:
         '201':
-          description: Webhook creado
+          description: Webhook created
           content:
             application/json:
               schema:
@@ -666,14 +666,14 @@ paths:
   /test/slow:
     get:
       summary: Slow endpoint for latency testing
-      description: Endpoint que responde lentamente para testear chaos latency
+      description: Endpoint that responds slowly to test chaos latency
       operationId: slowEndpoint
       tags: [Testing]
       security: []
       parameters:
         - name: delay
           in: query
-          description: Delay en milisegundos
+          description: Delay in milliseconds
           schema:
             type: integer
             minimum: 100
@@ -681,7 +681,7 @@ paths:
             default: 2000
       responses:
         '200':
-          description: Respuesta lenta
+          description: Slow response
           content:
             application/json:
               schema:
@@ -700,19 +700,19 @@ paths:
       - name: errorCode
         in: path
         required: true
-        description: Código de error HTTP a simular
+        description: HTTP error code to simulate
         schema:
           type: integer
           enum: [400, 401, 403, 404, 429, 500, 502, 503]
     get:
       summary: Simulate HTTP errors
-      description: Endpoint para testear manejo de errores
+      description: Endpoint for testing error handling
       operationId: simulateError
       tags: [Testing]
       security: []
       responses:
         '400':
-          description: Bad Request simulado
+          description: Simulated Bad Request
           content:
             application/json:
               schema:
@@ -720,7 +720,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          description: Forbidden simulado
+          description: Simulated Forbidden
           content:
             application/json:
               schema:
@@ -736,7 +736,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
         '502':
-          description: Bad Gateway simulado
+          description: Simulated Bad Gateway
           content:
             application/json:
               schema:
@@ -751,7 +751,7 @@ paths:
   /test/validation:
     post:
       summary: Test request validation
-      description: Endpoint para testear validación de request body
+      description: Endpoint for testing request body validation
       operationId: testValidation
       tags: [Testing]
       security: []
@@ -763,7 +763,7 @@ paths:
               $ref: '#/components/schemas/ValidationTestRequest'
       responses:
         '200':
-          description: Validación exitosa
+          description: Successful validation
           content:
             application/json:
               schema:
@@ -774,7 +774,7 @@ paths:
                   validated_data:
                     $ref: '#/components/schemas/ValidationTestRequest'
         '400':
-          description: Errores de validación
+          description: Validation errors
           content:
             application/json:
               schema:
@@ -801,16 +801,16 @@ components:
       properties:
         error:
           type: string
-          description: Código de error
+          description: Error code
         message:
           type: string
-          description: Mensaje descriptivo del error
+          description: Descriptive error message
         code:
           type: integer
-          description: Código HTTP
+          description: HTTP code
         details:
           type: object
-          description: Detalles adicionales del error
+          description: Additional error details
         timestamp:
           type: string
           format: date-time
@@ -885,7 +885,7 @@ components:
           format: date-time
         uptime:
           type: integer
-          description: Uptime en segundos
+          description: Uptime in seconds
         version:
           type: string
         checks:
@@ -906,37 +906,37 @@ components:
       properties:
         requests_total:
           type: integer
-          description: Total de requests procesados
+          description: Total requests processed
         requests_per_second:
           type: number
           format: float
-          description: RPS actual
+          description: Current RPS
         errors_total:
           type: integer
-          description: Total de errores
+          description: Total errors
         error_rate:
           type: number
           format: float
-          description: Tasa de error
+          description: Error rate
         average_latency_ms:
           type: number
           format: float
-          description: Latencia promedio en ms
+          description: Average latency in ms
         p95_latency_ms:
           type: number
           format: float
-          description: Latencia p95 en ms
+          description: P95 latency in ms
         memory_usage_mb:
           type: number
           format: float
-          description: Uso de memoria en MB
+          description: Memory usage in MB
         cpu_usage_percent:
           type: number
           format: float
-          description: Uso de CPU en porcentaje
+          description: CPU usage in percentage
         active_connections:
           type: integer
-          description: Conexiones activas
+          description: Active connections
 
     # ===== USER SCHEMAS =====
     UserProfile:
@@ -1062,7 +1062,6 @@ components:
           type: string
           minLength: 8
           maxLength: 128
-          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]'
         role:
           type: string
           enum: [admin, user, moderator]
@@ -1434,7 +1433,7 @@ components:
           type: string
         size:
           type: integer
-          description: Tamaño en bytes
+          description: Size in bytes
         content_type:
           type: string
         url:
@@ -1561,7 +1560,7 @@ components:
 
   responses:
     BadRequest:
-      description: Solicitud inválida
+      description: Invalid request
       content:
         application/json:
           schema:
@@ -1572,7 +1571,7 @@ components:
             code: 400
 
     Unauthorized:
-      description: No autorizado
+      description: Unauthorized
       content:
         application/json:
           schema:
@@ -1583,7 +1582,7 @@ components:
             code: 401
 
     NotFound:
-      description: Recurso no encontrado
+      description: Resource not found
       content:
         application/json:
           schema:
@@ -1594,7 +1593,7 @@ components:
             code: 404
 
     InternalServerError:
-      description: Error interno del servidor
+      description: Internal server error
       content:
         application/json:
           schema:
@@ -1608,7 +1607,7 @@ components:
     PageParam:
       name: page
       in: query
-      description: Número de página
+      description: Page number
       schema:
         type: integer
         minimum: 1
@@ -1617,7 +1616,7 @@ components:
     LimitParam:
       name: limit
       in: query
-      description: Elementos por página
+      description: Items per page
       schema:
         type: integer
         minimum: 1
@@ -1626,65 +1625,19 @@ components:
 
 tags:
   - name: System
-    description: Endpoints del sistema y health checks
+    description: System endpoints and health checks
   - name: Users
-    description: Gestión de usuarios
+    description: User management
   - name: Products
-    description: Gestión de productos y catálogo
+    description: Product management and catalog
   - name: Orders
-    description: Gestión de órdenes y compras
+    description: Order management and purchases
   - name: Analytics
-    description: Analytics y reportes
+    description: Analytics and reports
   - name: Files
-    description: Gestión de archivos
+    description: File management
   - name: Webhooks
-    description: Configuración de webhooks
+    description: Webhook configuration
   - name: Testing
-    description: Endpoints específicos para testing
+    description: Specific endpoints for testing
 
-webhooks:
-  userCreated:
-    post:
-      summary: User Created Webhook
-      description: Se dispara cuando se crea un nuevo usuario
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                event:
-                  type: string
-                  example: "user.created"
-                timestamp:
-                  type: string
-                  format: date-time
-                data:
-                  $ref: '#/components/schemas/User'
-      responses:
-        '200':
-          description: Webhook procesado exitosamente
-
-  orderCreated:
-    post:
-      summary: Order Created Webhook
-      description: Se dispara cuando se crea una nueva orden
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                event:
-                  type: string
-                  example: "order.created"
-                timestamp:
-                  type: string
-                  format: date-time
-                data:
-                  $ref: '#/components/schemas/Order'
-      responses:
-        '200':
-          description: Webhook procesado exitosamente

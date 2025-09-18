@@ -1,113 +1,113 @@
-# Vanta CLI - Escenarios de Testing Específicos
+# Vanta CLI - Specific Testing Scenarios
 
-Este documento contiene escenarios de testing específicos, casos edge, tests de regresión y validaciones avanzadas para el CLI de Vanta.
+This document contains specific testing scenarios, edge cases, regression tests, and advanced validations for the Vanta CLI.
 
-## Índice
+## Table of Contents
 
-- [Escenarios de Testing por Funcionalidad](#escenarios-de-testing-por-funcionalidad)
-- [Tests de Integración](#tests-de-integración)
-- [Tests de Regresión](#tests-de-regresión)
-- [Tests de Performance](#tests-de-performance)
-- [Tests de Seguridad](#tests-de-seguridad)
-- [Tests de Edge Cases](#tests-de-edge-cases)
-- [Automatización de Tests](#automatización-de-tests)
+- [Testing Scenarios by Functionality](#testing-scenarios-by-functionality)
+- [Integration Tests](#integration-tests)
+- [Regression Tests](#regression-tests)
+- [Performance Tests](#performance-tests)
+- [Security Tests](#security-tests)
+- [Edge Case Tests](#edge-case-tests)
+- [Test Automation](#test-automation)
 
 ---
 
-## Escenarios de Testing por Funcionalidad
+## Testing Scenarios by Functionality
 
-### Start Command - Escenarios Específicos
+### Start Command - Specific Scenarios
 
-#### Escenario 1: Multiple Specs Formats
+#### Scenario 1: Multiple Specs Formats
 ```bash
-# Test con YAML
+# Test with YAML
 vanta start spec/vanta-test-api.yaml
 curl http://localhost:8080/health
 
-# Test con JSON (convertir spec a JSON)
+# Test with JSON (convert spec to JSON)
 yq eval -o=json spec/vanta-test-api.yaml > spec/vanta-test-api.json
 vanta start spec/vanta-test-api.json
 curl http://localhost:8080/health
 
-# Ambos deben funcionar idénticamente
+# Both should work identically
 ```
 
-#### Escenario 2: Rutas Relativas vs Absolutas
+#### Scenario 2: Relative vs Absolute Paths
 ```bash
-# Test con ruta relativa
+# Test with relative path
 cd /tmp
 vanta start ../path/to/vanta/spec/vanta-test-api.yaml
 
-# Test con ruta absoluta
+# Test with absolute path
 vanta start /full/path/to/vanta/spec/vanta-test-api.yaml
 
-# Test con especificación en directorio actual
+# Test with specification in current directory
 cp /path/to/vanta/spec/vanta-test-api.yaml ./
 vanta start ./vanta-test-api.yaml
 ```
 
-#### Escenario 3: Server Binding y Network
+#### Scenario 3: Server Binding and Network
 ```bash
-# Test binding a localhost solamente
+# Test binding to localhost only
 vanta start spec/vanta-test-api.yaml --host 127.0.0.1 --port 8080
 
-# Debe ser accesible solo desde localhost
-curl http://127.0.0.1:8080/health  # ✅ Debe funcionar
-curl http://0.0.0.0:8080/health     # ❌ Debe fallar
+# Should be accessible only from localhost
+curl http://127.0.0.1:8080/health  # ✅ Should work
+curl http://0.0.0.0:8080/health     # ❌ Should fail
 
-# Test binding a todas las interfaces
+# Test binding to all interfaces
 vanta start spec/vanta-test-api.yaml --host 0.0.0.0 --port 8080
 
-# Debe ser accesible desde cualquier IP
-curl http://localhost:8080/health   # ✅ Debe funcionar
-curl http://127.0.0.1:8080/health   # ✅ Debe funcionar
+# Should be accessible from any IP
+curl http://localhost:8080/health   # ✅ Should work
+curl http://127.0.0.1:8080/health   # ✅ Should work
 ```
 
-#### Escenario 4: Port Conflicts
+#### Scenario 4: Port Conflicts
 ```bash
-# Ocupar puerto 8080
+# Occupy port 8080
 python3 -c "import socket,time; s=socket.socket(); s.bind(('',8080)); s.listen(1); time.sleep(30)" &
 BLOCKER_PID=$!
 
-# Intentar iniciar Vanta en mismo puerto
+# Try to start Vanta on same port
 vanta start spec/vanta-test-api.yaml --port 8080
 
-# Debe fallar con error descriptivo:
+# Should fail with descriptive error:
 # Error: failed to start server: listen tcp :8080: bind: address already in use
 
 kill $BLOCKER_PID
 
-# Test puerto dinámico
+# Test dynamic port
 vanta start spec/vanta-test-api.yaml --port 0
-# Debe asignar puerto automáticamente
+# Should assign port automatically
 ```
 
-### Config Command - Escenarios Específicos
+### Config Command - Specific Scenarios
 
-#### Escenario 5: Config Validation Edge Cases
+#### Scenario 5: Config Validation Edge Cases
 ```bash
-# Test configuración con valores límite
+# Test configuration with limit values
 cat > edge-config.yaml << EOF
 server:
-  port: 1              # Puerto mínimo válido
-  host: ""             # Host vacío
-  read_timeout: 1ms    # Timeout mínimo
-  write_timeout: 24h   # Timeout máximo
-  max_conns_per_ip: 0  # Sin límite
-  concurrency: 1       # Concurrencia mínima
+  port: 1              # Minimum valid port
+  host: ""             # Empty host
+  read_timeout: 1ms    # Minimum timeout
+  write_timeout: 24h   # Maximum timeout
+  max_conns_per_ip: 0  # No limit
+  concurrency: 1       # Minimum concurrency
 mock:
-  seed: -1             # Seed negativo
-  max_depth: 0         # Profundidad cero
-  default_array_size: 1000  # Array grande
+  seed: -1             # Negative seed
+  max_depth: 0         # Zero depth
+  default_array_size: 1000  # Large array
 logging:
-  level: ""            # Level vacío
-  format: "invalid"    # Formato inválido
+  level: ""            # Empty level
+  format: "invalid"    # Invalid format
 EOF
 
 vanta config validate edge-config.yaml
-# Debe reportar errores específicos para cada campo inválido
+# Should report specific errors for each invalid field
 
-# Test configuración con valores extremos válidos
+# Test configuration with valid extreme values
 cat > extreme-config.yaml << EOF
 server:
   port: 65535
@@ -122,12 +122,12 @@ mock:
 EOF
 
 vanta config validate extreme-config.yaml
-# Debe ser válido
+# Should be valid
 ```
 
-#### Escenario 6: Config Override Priority
+#### Scenario 6: Config Override Priority
 ```bash
-# Crear configuración base
+# Create base configuration
 cat > base-config.yaml << EOF
 server:
   port: 8080
@@ -136,20 +136,20 @@ logging:
   level: "info"
 EOF
 
-# Test prioridad de overrides
+# Test override priority
 vanta start spec/vanta-test-api.yaml \
   --config base-config.yaml \
   --port 9090 \
   --host 127.0.0.1
 
-# Verificar que flags CLI tienen prioridad
-curl http://127.0.0.1:9090/health  # ✅ Debe funcionar
-curl http://0.0.0.0:8080/health     # ❌ Debe fallar
+# Verify that CLI flags have priority
+curl http://127.0.0.1:9090/health  # ✅ Should work
+curl http://0.0.0.0:8080/health     # ❌ Should fail
 ```
 
-### Validation Command - Escenarios Específicos
+### Validation Command - Specific Scenarios
 
-#### Escenario 7: OpenAPI Version Compatibility
+#### Scenario 7: OpenAPI Version Compatibility
 ```bash
 # Test OpenAPI 3.0.0
 cat > openapi30.yaml << EOF
@@ -171,14 +171,14 @@ vanta validate spec openapi30.yaml
 sed 's/3.0.0/3.0.3/' openapi30.yaml > openapi303.yaml
 vanta validate spec openapi303.yaml
 
-# Test OpenAPI 3.1.0 (si es soportado)
+# Test OpenAPI 3.1.0 (if supported)
 sed 's/3.0.0/3.1.0/' openapi30.yaml > openapi310.yaml
 vanta validate spec openapi310.yaml
 ```
 
-#### Escenario 8: Schema Validation Edge Cases
+#### Scenario 8: Schema Validation Edge Cases
 ```bash
-# Test schema con referencias circulares
+# Test schema with circular references
 cat > circular-refs.yaml << EOF
 openapi: 3.0.3
 info:
@@ -204,59 +204,59 @@ components:
         children:
           type: array
           items:
-            \$ref: '#/components/schemas/Node'  # Referencia circular
+            \$ref: '#/components/schemas/Node'  # Circular reference
 EOF
 
 vanta validate spec circular-refs.yaml
-# Debe manejar referencias circulares gracefully
+# Should handle circular references gracefully
 ```
 
-### Record Command - Escenarios Específicos
+### Record Command - Specific Scenarios
 
-#### Escenario 9: Recording Storage Limits
+#### Scenario 9: Recording Storage Limits
 ```bash
-# Test límite de grabaciones
+# Test recording limit
 vanta record start --max-recordings 3
 
-# Generar más requests que el límite
+# Generate more requests than the limit
 for i in {1..10}; do
   curl http://localhost:8080/users
   sleep 0.1
 done
 
 vanta record list
-# Debe mostrar solo 3 grabaciones (las más recientes)
+# Should show only 3 recordings (the most recent ones)
 
 vanta record stop
 ```
 
-#### Escenario 10: Recording Filters Advanced
+#### Scenario 10: Advanced Recording Filters
 ```bash
-# Test filtros complejos
+# Test complex filters
 vanta record start \
   --filter "method:GET" \
   --filter "method:POST" \
   --filter "endpoint:/users*" \
   --filter "status:200"
 
-# Generar tráfico mixto
-curl -X GET http://localhost:8080/users          # ✅ Debe grabarse
-curl -X POST http://localhost:8080/users -d '{}'  # ✅ Debe grabarse
-curl -X GET http://localhost:8080/products       # ❌ No debe grabarse
-curl -X PUT http://localhost:8080/users/1 -d '{}'  # ❌ No debe grabarse
+# Generate mixed traffic
+curl -X GET http://localhost:8080/users          # ✅ Should be recorded
+curl -X POST http://localhost:8080/users -d '{}'  # ✅ Should be recorded
+curl -X GET http://localhost:8080/products       # ❌ Should not be recorded
+curl -X PUT http://localhost:8080/users/1 -d '{}'  # ❌ Should not be recorded
 
 vanta record list
-# Debe mostrar solo las requests que cumplan TODOS los filtros
+# Should show only requests that meet ALL filters
 
 vanta record stop
 ```
 
-#### Escenario 11: Recording Large Bodies
+#### Scenario 11: Recording Large Bodies
 ```bash
-# Test con bodies grandes
+# Test with large bodies
 vanta record start --max-body-size 1KB
 
-# Generar request con body grande
+# Generate request with large body
 large_body=$(python3 -c "print('x' * 2000)")
 curl -X POST http://localhost:8080/users \
   -H "Content-Type: application/json" \
@@ -264,23 +264,23 @@ curl -X POST http://localhost:8080/users \
 
 vanta record list
 vanta record show <recording-id>
-# El body debe estar truncado a 1KB
+# The body should be truncated to 1KB
 
 vanta record stop
 ```
 
-### Chaos Command - Escenarios Específicos
+### Chaos Command - Specific Scenarios
 
-#### Escenario 12: Chaos Probability Testing
+#### Scenario 12: Chaos Probability Testing
 ```bash
-# Configurar chaos con probabilidad alta para testing
+# Configure chaos with high probability for testing
 cat > high-chaos.yaml << EOF
 chaos:
   enabled: true
   scenarios:
     - name: "high_latency"
       type: "latency"
-      probability: 0.9  # 90% probabilidad
+      probability: 0.9  # 90% probability
       endpoints: ["/test/*"]
       parameters:
         min_delay: "500ms"
@@ -290,7 +290,7 @@ EOF
 vanta chaos start --config high-chaos.yaml &
 CHAOS_PID=$!
 
-# Generar 100 requests y medir cuántos tienen latencia adicional
+# Generate 100 requests and measure how many have additional latency
 start_time=$(date +%s%N)
 for i in {1..100}; do
   response_time=$(curl -s -w "%{time_total}" -o /dev/null http://localhost:8080/test/slow)
@@ -300,20 +300,20 @@ for i in {1..100}; do
 done
 end_time=$(date +%s%N)
 
-# Debe haber ~90% de requests con latencia alta
+# Should have ~90% of requests with high latency
 kill $CHAOS_PID
 ```
 
-#### Escenario 13: Chaos Error Injection
+#### Scenario 13: Chaos Error Injection
 ```bash
-# Test error injection específico
+# Test specific error injection
 cat > error-chaos.yaml << EOF
 chaos:
   enabled: true
   scenarios:
     - name: "specific_errors"
       type: "error"
-      probability: 1.0  # 100% para testing
+      probability: 1.0  # 100% for testing
       endpoints: ["/test/error/*"]
       parameters:
         status_codes: [503, 504]
@@ -322,35 +322,35 @@ EOF
 vanta chaos start --config error-chaos.yaml &
 CHAOS_PID=$!
 
-# Test que errores específicos son retornados
+# Test that specific errors are returned
 for code in 503 504; do
   response=$(curl -s -w "%{http_code}" http://localhost:8080/test/error/500)
   actual_code="${response: -3}"
   echo "Expected error injection, got: $actual_code"
-  # Debe retornar 503 o 504 en lugar de 500
+  # Should return 503 or 504 instead of 500
 done
 
 kill $CHAOS_PID
 ```
 
-### State Command - Escenarios Específicos
+### State Command - Specific Scenarios
 
-#### Escenario 14: State Persistence
+#### Scenario 14: State Persistence
 ```bash
-# Test persistencia del estado
+# Test state persistence
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 
-# Establecer estado
+# Set state
 vanta state set persistent_data "test_value"
 vanta state set counter 42
 
-# Reiniciar servidor
+# Restart server
 kill $SERVER_PID
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 
-# Verificar que estado persiste
+# Verify that state persists
 stored_value=$(vanta state get persistent_data --format raw)
 if [ "$stored_value" = "test_value" ]; then
   echo "✅ State persistence works"
@@ -361,21 +361,21 @@ fi
 kill $SERVER_PID
 ```
 
-#### Escenario 15: State TTL Expiration
+#### Scenario 15: State TTL Expiration
 ```bash
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 
-# Establecer valor con TTL corto
+# Set value with short TTL
 vanta state set temp_value "expires_soon" --ttl 5s
 
-# Verificar que existe inmediatamente
+# Verify it exists immediately
 vanta state get temp_value
 
-# Esperar expiración
+# Wait for expiration
 sleep 6
 
-# Verificar que expiró
+# Verify it expired
 vanta state get temp_value 2>&1 | grep "not found"
 if [ $? -eq 0 ]; then
   echo "✅ TTL expiration works"
@@ -388,30 +388,30 @@ kill $SERVER_PID
 
 ---
 
-## Tests de Integración
+## Integration Tests
 
-### Integración Start + Record + Chaos
+### Start + Record + Chaos Integration
 
-#### Escenario 16: Workflow Completo
+#### Scenario 16: Complete Workflow
 ```bash
-# Script de integración completa
+# Complete integration script
 #!/bin/bash
 set -e
 
 echo "🚀 Starting integration test..."
 
-# 1. Iniciar servidor
+# 1. Start server
 vanta start spec/vanta-test-api.yaml --port 8080 &
 SERVER_PID=$!
 sleep 2
 
 echo "✅ Server started"
 
-# 2. Iniciar grabación
+# 2. Start recording
 vanta record start --max-recordings 50
 echo "✅ Recording started"
 
-# 3. Configurar chaos
+# 3. Configure chaos
 cat > integration-chaos.yaml << EOF
 chaos:
   enabled: true
@@ -429,7 +429,7 @@ vanta chaos start --config integration-chaos.yaml &
 CHAOS_PID=$!
 echo "✅ Chaos started"
 
-# 4. Generar tráfico de prueba
+# 4. Generate test traffic
 echo "📊 Generating test traffic..."
 for i in {1..50}; do
   curl -s http://localhost:8080/users > /dev/null &
@@ -446,15 +446,15 @@ done
 wait
 echo "✅ Traffic generated"
 
-# 5. Parar chaos
+# 5. Stop chaos
 kill $CHAOS_PID
 echo "✅ Chaos stopped"
 
-# 6. Parar grabación
+# 6. Stop recording
 vanta record stop
 echo "✅ Recording stopped"
 
-# 7. Analizar resultados
+# 7. Analyze results
 echo "📊 Recording summary:"
 vanta record list --limit 10
 
@@ -477,20 +477,20 @@ vanta record delete --all --force
 echo "🎉 Integration test completed successfully!"
 ```
 
-### Integración TUI + Monitoring
+### TUI + Monitoring Integration
 
-#### Escenario 17: TUI Monitoring Test
+#### Scenario 17: TUI Monitoring Test
 ```bash
-# Script para test de monitoreo TUI
+# Script for TUI monitoring test
 #!/bin/bash
 
-# Función para generar tráfico en background
+# Function to generate background traffic
 generate_traffic() {
   while true; do
     curl -s http://localhost:8080/users > /dev/null
     curl -s http://localhost:8080/products > /dev/null
 
-    # Generar algunos errores
+    # Generate some errors
     if [ $((RANDOM % 20)) -eq 0 ]; then
       curl -s http://localhost:8080/test/error/500 > /dev/null
     fi
@@ -531,13 +531,13 @@ echo "TUI monitoring test completed"
 
 ---
 
-## Tests de Regresión
+## Regression Tests
 
-### Regresión: OpenAPI Parsing
+### Regression: OpenAPI Parsing
 
-#### Escenario 18: Backward Compatibility
+#### Scenario 18: Backward Compatibility
 ```bash
-# Test con especificaciones OpenAPI más antiguas
+# Test with older OpenAPI specifications
 for version in "3.0.0" "3.0.1" "3.0.2" "3.0.3"; do
   echo "Testing OpenAPI version $version"
 
@@ -554,44 +554,44 @@ for version in "3.0.0" "3.0.1" "3.0.2" "3.0.3"; do
 done
 ```
 
-### Regresión: Configuration Changes
+### Regression: Configuration Changes
 
-#### Escenario 19: Config Format Evolution
+#### Scenario 19: Config Format Evolution
 ```bash
-# Test compatibilidad con configuraciones anteriores
+# Test compatibility with previous configurations
 cat > legacy-config-v1.yaml << EOF
-# Formato legacy simulado
+# Simulated legacy format
 port: 8080
 host: "localhost"
 log_level: "info"
 chaos_enabled: false
 EOF
 
-# Debe manejar formato legacy gracefully o dar error descriptivo
+# Should handle legacy format gracefully or give descriptive error
 vanta config validate legacy-config-v1.yaml
 
-# Test migración de configuración
+# Test configuration migration
 vanta config init --output new-format.yaml
-# Comparar estructuras
+# Compare structures
 diff legacy-config-v1.yaml new-format.yaml || true
 ```
 
 ---
 
-## Tests de Performance
+## Performance Tests
 
 ### Performance: Load Testing
 
-#### Escenario 20: High Concurrency
+#### Scenario 20: High Concurrency
 ```bash
-# Test con alta concurrencia
+# Test with high concurrency
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 sleep 2
 
 echo "🔥 Running high concurrency test..."
 
-# Test con herramientas disponibles
+# Test with available tools
 if command -v hey &> /dev/null; then
   echo "Using hey for load testing..."
   hey -n 10000 -c 100 -t 30 http://localhost:8080/health
@@ -610,7 +610,7 @@ else
   wait
 fi
 
-# Verificar métricas post-test
+# Verify post-test metrics
 echo "📊 Post-test metrics:"
 curl -s http://localhost:8080/metrics | jq '{requests_total, errors_total, average_latency_ms, p95_latency_ms}'
 
@@ -619,16 +619,16 @@ kill $SERVER_PID
 
 ### Performance: Memory Testing
 
-#### Escenario 21: Memory Leak Detection
+#### Scenario 21: Memory Leak Detection
 ```bash
-# Test detección de memory leaks
+# Test memory leak detection
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
 sleep 2
 
 echo "🧠 Memory leak detection test..."
 
-# Función para obtener uso de memoria
+# Function to get memory usage
 get_memory_usage() {
   ps -p $SERVER_PID -o rss= | tr -d ' '
 }
@@ -637,7 +637,7 @@ get_memory_usage() {
 initial_memory=$(get_memory_usage)
 echo "Initial memory: ${initial_memory}KB"
 
-# Generar tráfico sostenido
+# Generate sustained traffic
 for cycle in {1..10}; do
   echo "Cycle $cycle: Generating 1000 requests..."
 
@@ -655,7 +655,7 @@ for cycle in {1..10}; do
   memory_growth=$((current_memory - initial_memory))
   echo "Memory after cycle $cycle: ${current_memory}KB (growth: +${memory_growth}KB)"
 
-  sleep 5  # Pausa entre ciclos
+  sleep 5  # Pause between cycles
 done
 
 final_memory=$(get_memory_usage)
@@ -677,11 +677,11 @@ kill $SERVER_PID
 
 ---
 
-## Tests de Seguridad
+## Security Tests
 
 ### Security: Input Validation
 
-#### Escenario 22: Malicious Payloads
+#### Scenario 22: Malicious Payloads
 ```bash
 vanta start spec/vanta-test-api.yaml &
 SERVER_PID=$!
@@ -717,9 +717,9 @@ kill $SERVER_PID
 
 ### Security: Rate Limiting
 
-#### Escenario 23: Rate Limit Testing
+#### Scenario 23: Rate Limit Testing
 ```bash
-# Configurar rate limiting
+# Configure rate limiting
 cat > rate-limit-config.yaml << EOF
 server:
   port: 8080
@@ -738,7 +738,7 @@ sleep 2
 
 echo "🚦 Rate limiting test..."
 
-# Generar requests rápidamente
+# Generate requests quickly
 success_count=0
 rate_limited_count=0
 
@@ -769,13 +769,13 @@ kill $SERVER_PID
 
 ---
 
-## Tests de Edge Cases
+## Edge Case Tests
 
 ### Edge Case: Empty Specifications
 
-#### Escenario 24: Minimal Valid Spec
+#### Scenario 24: Minimal Valid Spec
 ```bash
-# Test con especificación mínima válida
+# Test with minimal valid specification
 cat > minimal-spec.yaml << EOF
 openapi: 3.0.3
 info:
@@ -789,18 +789,18 @@ vanta start minimal-spec.yaml &
 SERVER_PID=$!
 sleep 2
 
-# Debe iniciar sin errores pero no tener endpoints
+# Should start without errors but have no endpoints
 curl -s -w "%{http_code}" http://localhost:8080/nonexistent
-# Debe retornar 404
+# Should return 404
 
 kill $SERVER_PID
 ```
 
 ### Edge Case: Special Characters
 
-#### Escenario 25: Unicode and Special Characters
+#### Scenario 25: Unicode and Special Characters
 ```bash
-# Test con caracteres especiales en configuración
+# Test with special characters in configuration
 cat > unicode-config.yaml << EOF
 server:
   port: 8080
@@ -817,7 +817,7 @@ vanta start spec/vanta-test-api.yaml --config unicode-config.yaml &
 SERVER_PID=$!
 sleep 2
 
-# Test que datos con unicode se generan correctamente
+# Test that unicode data is generated correctly
 curl http://localhost:8080/users | jq '.'
 
 kill $SERVER_PID
@@ -825,9 +825,9 @@ kill $SERVER_PID
 
 ### Edge Case: File System Limits
 
-#### Escenario 26: Long Path Names
+#### Scenario 26: Long Path Names
 ```bash
-# Test con nombres de archivo largos
+# Test with long filenames
 long_name="very_long_filename_$(printf 'a%.0s' {1..200}).yaml"
 cp spec/vanta-test-api.yaml "$long_name"
 
@@ -1158,23 +1158,23 @@ fi
 
 ---
 
-## Conclusión
+## Conclusion
 
-Estos escenarios de testing cubren:
+These testing scenarios cover:
 
-1. **Funcionalidad básica**: Verificación de que cada comando funciona correctamente
-2. **Edge cases**: Casos límite y situaciones especiales
-3. **Integración**: Tests que verifican la interacción entre componentes
-4. **Performance**: Tests de carga y detección de memory leaks
-5. **Seguridad**: Validación de input y rate limiting
-6. **Regresión**: Tests para prevenir regresiones en futuras versiones
-7. **Automatización**: Scripts para ejecutar tests automáticamente
+1. **Basic functionality**: Verification that each command works correctly
+2. **Edge cases**: Limit cases and special situations
+3. **Integration**: Tests that verify interaction between components
+4. **Performance**: Load tests and memory leak detection
+5. **Security**: Input validation and rate limiting
+6. **Regression**: Tests to prevent regressions in future versions
+7. **Automation**: Scripts to run tests automatically
 
-Para usar estos tests:
+To use these tests:
 
-1. **Manual**: Ejecutar cada escenario individualmente durante desarrollo
-2. **Semi-automatizado**: Usar el script `test-runner.sh` para test suite completo
-3. **CI/CD**: Integrar con GitHub Actions u otro CI/CD system
-4. **Monitoring**: Usar para monitoring de health en producción
+1. **Manual**: Execute each scenario individually during development
+2. **Semi-automated**: Use the `test-runner.sh` script for complete test suite
+3. **CI/CD**: Integrate with GitHub Actions or other CI/CD system
+4. **Monitoring**: Use for health monitoring in production
 
-Cada escenario incluye comandos específicos y resultados esperados para facilitar la validación manual y automatizada de la funcionalidad del CLI de Vanta.
+Each scenario includes specific commands and expected results to facilitate manual and automated validation of the Vanta CLI functionality.
