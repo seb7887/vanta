@@ -19,6 +19,13 @@ logging:
     output: stdout
     sampling: false
     add_caller: true
+middleware:
+    request_id: true
+hotreload:
+    enabled: true
+    watch_config: true
+    watch_spec: true
+    debounce_delay: 500ms
 chaos:
     enabled: false
     scenarios: []
