@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"github.com/seb7887/vanta/pkg/api"
 	"github.com/seb7887/vanta/pkg/chaos"
 	"github.com/seb7887/vanta/pkg/config"
 )
@@ -27,20 +28,23 @@ Available chaos types:
 
 Use subcommands to manage chaos scenarios:
   - start:   Start chaos testing with specified scenarios
-  - stop:    Stop all active chaos scenarios  
+  - stop:    Stop all active chaos scenarios
   - status:  Show current chaos testing status
   - list:    List available scenarios from configuration`,
-		Example: `  # Start chaos testing with a specific scenario
-  mocker chaos start --scenario api_latency --config chaos.yaml
+		Example: `  # Start chaos testing with HTTP server using OpenAPI spec
+  vanta chaos start --config chaos.yaml --spec examples/petstore.yaml
+
+  # Start chaos testing in standalone mode (original behavior)
+  vanta chaos start --scenario api_latency --config chaos.yaml
 
   # Stop all chaos testing
-  mocker chaos stop
+  vanta chaos stop
 
   # Check chaos status
-  mocker chaos status
+  vanta chaos status
 
   # List available scenarios
-  mocker chaos list --config chaos.yaml`,
+  vanta chaos list --config chaos.yaml`,
 	}
 
 	// Add subcommands
@@ -56,6 +60,7 @@ Use subcommands to manage chaos scenarios:
 func NewChaosStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var (
 		configFile string
+		specFile   string
 		scenario   string
 		duration   time.Duration
 	)
@@ -64,18 +69,23 @@ func NewChaosStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Comman
 		Use:   "start",
 		Short: "Start chaos testing scenarios",
 		Long: `Start chaos testing by loading scenarios from configuration file.
-You can specify a particular scenario to run, or run all enabled scenarios.`,
+You can specify a particular scenario to run, or run all enabled scenarios.
+When --spec is provided, starts a full HTTP server with chaos testing enabled.`,
 		Example: `  # Start all enabled scenarios
-  mocker chaos start --config chaos.yaml
+  vanta chaos start --config chaos.yaml
 
   # Start a specific scenario for 5 minutes
-  mocker chaos start --scenario api_latency --duration 5m --config chaos.yaml`,
+  vanta chaos start --scenario api_latency --duration 5m --config chaos.yaml
+
+  # Start chaos testing with HTTP server using OpenAPI spec
+  vanta chaos start --config chaos.yaml --spec examples/petstore.yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runChaosStart(ctx, logger, configFile, scenario, duration)
+			return runChaosStart(ctx, logger, configFile, specFile, scenario, duration)
 		},
 	}
 
 	cmd.Flags().StringVarP(&configFile, "config", "c", "config.yaml", "Configuration file path")
+	cmd.Flags().StringVarP(&specFile, "spec", "", "", "OpenAPI specification file (starts HTTP server when provided)")
 	cmd.Flags().StringVarP(&scenario, "scenario", "s", "", "Specific scenario to start (optional)")
 	cmd.Flags().DurationVarP(&duration, "duration", "d", 0, "Duration to run chaos testing (0 = indefinite)")
 
@@ -140,7 +150,7 @@ func NewChaosListCommand(ctx context.Context, logger *zap.Logger) *cobra.Command
 }
 
 // runChaosStart implements the chaos start command
-func runChaosStart(ctx context.Context, logger *zap.Logger, configFile, scenario string, duration time.Duration) error {
+func runChaosStart(ctx context.Context, logger *zap.Logger, configFile, specFile, scenario string, duration time.Duration) error {
 	// Load configuration
 	cfg, err := loadConfig(configFile)
 	if err != nil {
@@ -173,16 +183,107 @@ func runChaosStart(ctx context.Context, logger *zap.Logger, configFile, scenario
 		activeScenarios = cfg.Chaos.Scenarios
 	}
 
+	// Branch: with spec file (HTTP server mode) vs standalone mode
+	if specFile != "" {
+		return runChaosStartWithServer(ctx, logger, cfg, specFile, activeScenarios, duration)
+	} else {
+		return runChaosStartStandalone(ctx, logger, activeScenarios, duration)
+	}
+}
+
+// runChaosStartWithServer starts chaos testing with a full HTTP server
+func runChaosStartWithServer(ctx context.Context, logger *zap.Logger, cfg *config.Config, specFile string, activeScenarios []config.ScenarioConfig, duration time.Duration) error {
+	// Validate and parse spec file
+	if _, err := os.Stat(specFile); os.IsNotExist(err) {
+		return fmt.Errorf("OpenAPI spec file not found: %s", specFile)
+	}
+
+	// Parse OpenAPI specification
+	spec, err := parseOpenAPISpec(specFile, logger)
+	if err != nil {
+		return fmt.Errorf("failed to parse OpenAPI spec: %w", err)
+	}
+
+	// Ensure chaos is enabled and scenarios are loaded
+	cfg.Chaos.Enabled = true
+	cfg.Chaos.Scenarios = activeScenarios
+
+	// Create and start server
+	server, err := api.NewServer(cfg, spec, logger)
+	if err != nil {
+		return fmt.Errorf("failed to create server: %w", err)
+	}
+
+	logger.Info("Starting HTTP server with chaos testing enabled",
+		zap.String("spec", specFile),
+		zap.String("address", fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)),
+		zap.Int("scenarios", len(activeScenarios)))
+
+	fmt.Printf("🚀 Starting HTTP server with chaos testing enabled\n")
+	fmt.Printf("📋 Server: http://%s:%d\n", cfg.Server.Host, cfg.Server.Port)
+	fmt.Printf("📄 Spec: %s\n", specFile)
+	fmt.Printf("⚡ Chaos scenarios: %d\n", len(activeScenarios))
+
+	for _, s := range activeScenarios {
+		fmt.Printf("  - %s (%s): %.1f%% probability on %v\n",
+			s.Name, s.Type, s.Probability*100, s.Endpoints)
+	}
+
+	// Start server in a goroutine
+	serverErrCh := make(chan error, 1)
+	go func() {
+		if err := server.Start(); err != nil {
+			serverErrCh <- err
+		}
+	}()
+
+	// Handle duration and shutdown
+	if duration > 0 {
+		fmt.Printf("⏰ Will run for %v\n", duration)
+		timer := time.NewTimer(duration)
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+			fmt.Println("⏰ Duration elapsed, stopping server...")
+		case <-ctx.Done():
+			fmt.Println("🛑 Received shutdown signal, stopping server...")
+		case err := <-serverErrCh:
+			return fmt.Errorf("server error: %w", err)
+		}
+	} else {
+		fmt.Println("♾️  Running indefinitely (Ctrl+C to stop)")
+		select {
+		case <-ctx.Done():
+			fmt.Println("🛑 Received shutdown signal, stopping server...")
+		case err := <-serverErrCh:
+			return fmt.Errorf("server error: %w", err)
+		}
+	}
+
+	// Stop server
+	if err := server.Stop(); err != nil {
+		logger.Error("Error stopping server", zap.Error(err))
+		return err
+	}
+
+	logger.Info("Server stopped successfully")
+	fmt.Println("✅ Chaos testing with HTTP server stopped")
+	return nil
+}
+
+// runChaosStartStandalone starts chaos testing in standalone mode (original behavior)
+func runChaosStartStandalone(ctx context.Context, logger *zap.Logger, activeScenarios []config.ScenarioConfig, duration time.Duration) error {
 	// Create and initialize chaos engine
 	engine := chaos.NewDefaultChaosEngine(logger)
 	if err := engine.LoadScenarios(activeScenarios); err != nil {
 		return fmt.Errorf("failed to load chaos scenarios: %w", err)
 	}
 
-	fmt.Printf("✅ Chaos testing started with %d scenario(s)\n", len(activeScenarios))
-	
+	fmt.Printf("✅ Chaos testing started with %d scenario(s) (standalone mode)\n", len(activeScenarios))
+
 	for _, s := range activeScenarios {
-		fmt.Printf("  - %s (%s): %.1f%% probability on %v\n", 
+		fmt.Printf("  - %s (%s): %.1f%% probability on %v\n",
 			s.Name, s.Type, s.Probability*100, s.Endpoints)
 	}
 

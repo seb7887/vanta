@@ -3,12 +3,14 @@ package commands
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+	"github.com/seb7887/vanta/pkg/api"
 	"github.com/seb7887/vanta/pkg/config"
 	"github.com/seb7887/vanta/pkg/recorder"
 )
@@ -28,17 +30,20 @@ Available subcommands:
   - delete:    Delete recordings
   - replay:    Replay recorded traffic
   - export:    Export recordings to different formats`,
-		Example: `  # Start recording with default settings
-  mocker record start
+		Example: `  # Start recording with HTTP server using OpenAPI spec
+  vanta record start --config recording.yaml --spec examples/petstore.yaml
+
+  # Start recording configuration only (standalone mode)
+  vanta record start --config recording.yaml
 
   # List all recordings
-  mocker record list
+  vanta record list
 
   # Show details of a specific recording
-  mocker record show <recording-id>
+  vanta record show <recording-id>
 
   # Replay recordings to a target URL
-  mocker record replay --target http://localhost:8080`,
+  vanta record replay --target http://localhost:8080`,
 	}
 
 	// Add subcommands
@@ -56,6 +61,7 @@ Available subcommands:
 // NewRecordStartCommand creates the record start subcommand
 func NewRecordStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Command {
 	var configPath string
+	var specFile string
 	var filters []string
 	var outputDir string
 	var maxRecordings int
@@ -64,24 +70,26 @@ func NewRecordStartCommand(ctx context.Context, logger *zap.Logger) *cobra.Comma
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start recording API traffic",
-		Long:  `Start recording incoming API requests and responses to files.`,
-		Example: `  # Start recording with default settings
-  mocker record start
+		Long:  `Start recording incoming API requests and responses to files.
+When --spec is provided, starts a full HTTP server with recording enabled.`,
+		Example: `  # Start recording with HTTP server using OpenAPI spec
+  vanta record start --config recording.yaml --spec examples/petstore.yaml
 
-  # Start recording with custom configuration
-  mocker record start --config recording.yaml --output ./my-recordings
+  # Start recording configuration only (standalone mode)
+  vanta record start --config recording.yaml --output ./my-recordings
 
   # Start recording with filters
-  mocker record start --filter "method:GET" --filter "endpoint:/api/users"
+  vanta record start --filter "method:GET" --filter "endpoint:/api/users"
 
   # Start recording with limits
-  mocker record start --max-recordings 500 --max-body-size 2MB`,
+  vanta record start --max-recordings 500 --max-body-size 2MB`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runRecordStart(ctx, logger, configPath, filters, outputDir, maxRecordings, maxBodySize)
+			return runRecordStart(ctx, logger, configPath, specFile, filters, outputDir, maxRecordings, maxBodySize)
 		},
 	}
 
 	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Configuration file path")
+	cmd.Flags().StringVar(&specFile, "spec", "", "OpenAPI specification file (starts HTTP server when provided)")
 	cmd.Flags().StringSliceVarP(&filters, "filter", "f", nil, "Recording filters (method:GET, endpoint:/api/users, status:200)")
 	cmd.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory for recordings")
 	cmd.Flags().IntVar(&maxRecordings, "max-recordings", 0, "Maximum number of recordings to keep")
@@ -283,9 +291,7 @@ func NewRecordExportCommand(ctx context.Context, logger *zap.Logger) *cobra.Comm
 
 // Implementation functions
 
-func runRecordStart(ctx context.Context, logger *zap.Logger, configPath string, filters []string, outputDir string, maxRecordings int, maxBodySize string) error {
-	fmt.Println("🎬 Starting recording...")
-
+func runRecordStart(ctx context.Context, logger *zap.Logger, configPath, specFile string, filters []string, outputDir string, maxRecordings int, maxBodySize string) error {
 	// Load configuration
 	cfg, err := loadConfigForRecording(configPath)
 	if err != nil {
@@ -319,11 +325,87 @@ func runRecordStart(ctx context.Context, logger *zap.Logger, configPath string, 
 	// Enable recording
 	cfg.Recording.Enabled = true
 
-	fmt.Printf("✅ Recording enabled\n")
+	// Branch: with spec file (HTTP server mode) vs standalone mode
+	if specFile != "" {
+		return runRecordStartWithServer(ctx, logger, cfg, specFile)
+	} else {
+		return runRecordStartStandalone(ctx, logger, cfg)
+	}
+}
+
+// runRecordStartWithServer starts recording with a full HTTP server
+func runRecordStartWithServer(ctx context.Context, logger *zap.Logger, cfg *config.Config, specFile string) error {
+	// Validate and parse spec file
+	if _, err := os.Stat(specFile); os.IsNotExist(err) {
+		return fmt.Errorf("OpenAPI spec file not found: %s", specFile)
+	}
+
+	// Parse OpenAPI specification
+	spec, err := parseOpenAPISpec(specFile, logger)
+	if err != nil {
+		return fmt.Errorf("failed to parse OpenAPI spec: %w", err)
+	}
+
+	// Create and start server
+	server, err := api.NewServer(cfg, spec, logger)
+	if err != nil {
+		return fmt.Errorf("failed to create server: %w", err)
+	}
+
+	logger.Info("Starting HTTP server with recording enabled",
+		zap.String("spec", specFile),
+		zap.String("address", fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)),
+		zap.String("storage", cfg.Recording.Storage.Directory))
+
+	fmt.Printf("🚀 Starting HTTP server with recording enabled\n")
+	fmt.Printf("📋 Server: http://%s:%d\n", cfg.Server.Host, cfg.Server.Port)
+	fmt.Printf("📄 Spec: %s\n", specFile)
+	fmt.Printf("🎬 Recording: enabled\n")
 	fmt.Printf("📁 Storage directory: %s\n", cfg.Recording.Storage.Directory)
 	fmt.Printf("📊 Max recordings: %d\n", cfg.Recording.MaxRecordings)
 	fmt.Printf("📏 Max body size: %d bytes\n", cfg.Recording.MaxBodySize)
 	fmt.Printf("🔍 Filters: %d configured\n", len(cfg.Recording.Filters))
+
+	// Start server in a goroutine
+	serverErrCh := make(chan error, 1)
+	go func() {
+		if err := server.Start(); err != nil {
+			serverErrCh <- err
+		}
+	}()
+
+	fmt.Println("♾️  Server running (Ctrl+C to stop)")
+
+	// Wait for shutdown signal or server error
+	select {
+	case <-ctx.Done():
+		fmt.Println("🛑 Received shutdown signal, stopping server...")
+	case err := <-serverErrCh:
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	// Stop server
+	if err := server.Stop(); err != nil {
+		logger.Error("Error stopping server", zap.Error(err))
+		return err
+	}
+
+	logger.Info("Server stopped successfully")
+	fmt.Println("✅ Recording with HTTP server stopped")
+	return nil
+}
+
+// runRecordStartStandalone configures recording in standalone mode (original behavior)
+func runRecordStartStandalone(ctx context.Context, logger *zap.Logger, cfg *config.Config) error {
+	fmt.Println("🎬 Recording configuration enabled (standalone mode)")
+	fmt.Printf("📁 Storage directory: %s\n", cfg.Recording.Storage.Directory)
+	fmt.Printf("📊 Max recordings: %d\n", cfg.Recording.MaxRecordings)
+	fmt.Printf("📏 Max body size: %d bytes\n", cfg.Recording.MaxBodySize)
+	fmt.Printf("🔍 Filters: %d configured\n", len(cfg.Recording.Filters))
+
+	fmt.Println("💡 Note: Recording is configured but not active. Start a server to begin recording:")
+	fmt.Println("   vanta start --spec your-spec.yaml --config your-config.yaml")
+	fmt.Println("   (or use: vanta record start --spec your-spec.yaml)")
 
 	return nil
 }
