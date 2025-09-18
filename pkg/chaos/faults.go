@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"reflect"
+	"strconv"
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
@@ -44,8 +45,16 @@ func (e *ErrorInjector) Validate(params map[string]interface{}) error {
 	// Validate each error code
 	for i := 0; i < errorCodesValue.Len(); i++ {
 		codeValue := errorCodesValue.Index(i)
-		
+
+
 		var code int
+		var err error
+
+		// Handle interface{} types by getting the underlying value
+		if codeValue.Kind() == reflect.Interface {
+			codeValue = codeValue.Elem()
+		}
+
 		switch codeValue.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			code = int(codeValue.Int())
@@ -53,6 +62,12 @@ func (e *ErrorInjector) Validate(params map[string]interface{}) error {
 			code = int(codeValue.Uint())
 		case reflect.Float32, reflect.Float64:
 			code = int(codeValue.Float())
+		case reflect.String:
+			// Handle string-to-int conversion for YAML parsing issues
+			code, err = strconv.Atoi(codeValue.String())
+			if err != nil {
+				return fmt.Errorf("error_codes must contain only numeric values, found invalid string: %s", codeValue.String())
+			}
 		default:
 			return fmt.Errorf("error_codes must contain only numeric values")
 		}
@@ -113,8 +128,15 @@ func (e *ErrorInjector) parseErrorCodes(errorCodesRaw interface{}) ([]int, error
 	codes := make([]int, errorCodesValue.Len())
 	for i := 0; i < errorCodesValue.Len(); i++ {
 		codeValue := errorCodesValue.Index(i)
-		
+
 		var code int
+		var err error
+
+		// Handle interface{} types by getting the underlying value
+		if codeValue.Kind() == reflect.Interface {
+			codeValue = codeValue.Elem()
+		}
+
 		switch codeValue.Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			code = int(codeValue.Int())
@@ -122,6 +144,12 @@ func (e *ErrorInjector) parseErrorCodes(errorCodesRaw interface{}) ([]int, error
 			code = int(codeValue.Uint())
 		case reflect.Float32, reflect.Float64:
 			code = int(codeValue.Float())
+		case reflect.String:
+			// Handle string-to-int conversion for YAML parsing issues
+			code, err = strconv.Atoi(codeValue.String())
+			if err != nil {
+				return nil, fmt.Errorf("invalid error code string: %s", codeValue.String())
+			}
 		default:
 			return nil, fmt.Errorf("invalid error code type: %v", codeValue.Kind())
 		}

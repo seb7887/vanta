@@ -12,7 +12,7 @@ mock:
     locale: "en"
     max_depth: 5
     default_array_size: 3
-    prefer_examples: false
+    prefer_examples: true
 logging:
     level: "info"
     format: "json"
@@ -27,8 +27,21 @@ hotreload:
     watch_spec: true
     debounce_delay: 500ms
 chaos:
-    enabled: false
-    scenarios: []
+    enabled: true
+    scenarios:
+        - name: "latency"
+          type: "latency"
+          endpoints: ["/users", "/products"]
+          probability: 0.1
+          parameters:
+            min_delay: "100ms"
+            max_delay: "500ms"
+        - name: "random_errors"
+          type: "error"
+          endpoints: ["/users/*", "/products/*"]
+          probability: 0.05
+          parameters:
+            error_codes: [500, 502, 503]
 plugins: []
 metrics:
     enabled: true
