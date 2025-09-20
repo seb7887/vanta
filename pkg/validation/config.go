@@ -174,6 +174,27 @@ func NewValidationManager(spec *openapi.Specification, config *Config) *Validati
 	}
 }
 
+// NewValidationManagerWithReporter creates a new validation manager with a custom reporter
+func NewValidationManagerWithReporter(spec *openapi.Specification, config *Config, reporter *Reporter) *ValidationManager {
+	if config == nil {
+		config = DefaultValidationConfig()
+	}
+
+	requestValidator := NewRequestValidator(spec, config)
+	responseValidator := NewResponseValidator(spec, config)
+
+	// Update the validators to use the shared reporter
+	requestValidator.reporter = reporter
+	responseValidator.reporter = reporter
+
+	return &ValidationManager{
+		requestValidator:  requestValidator,
+		responseValidator: responseValidator,
+		reporter:          reporter,
+		config:            config,
+	}
+}
+
 // GetRequestValidator returns the request validator
 func (vm *ValidationManager) GetRequestValidator() *RequestValidator {
 	return vm.requestValidator

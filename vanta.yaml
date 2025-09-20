@@ -35,11 +35,11 @@ chaos:
           probability: 0.1
           parameters:
             min_delay: "100ms"
-            max_delay: "500ms"
+            max_delay: "5000ms"
         - name: "random_errors"
           type: "error"
           endpoints: ["/users/*", "/products/*"]
-          probability: 0.05
+          probability: 0.3
           parameters:
             error_codes: [500, 502, 503]
 plugins: []

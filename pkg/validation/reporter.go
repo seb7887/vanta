@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -29,6 +30,21 @@ type ReporterConfig struct {
 	AutoSave         bool          `json:"auto_save" yaml:"auto_save"`
 	SavePath         string        `json:"save_path" yaml:"save_path"`
 	IncludeExamples  bool          `json:"include_examples" yaml:"include_examples"`
+	PersistData      bool          `json:"persist_data" yaml:"persist_data"`
+	DataFile         string        `json:"data_file" yaml:"data_file"`
+	AutoSaveInterval time.Duration `json:"auto_save_interval" yaml:"auto_save_interval"`
+}
+
+// PersistentReporterData represents the data structure for persisting validation data
+type PersistentReporterData struct {
+	Version          string                     `json:"version"`
+	LastUpdated      time.Time                  `json:"last_updated"`
+	Coverage         *CoverageReport            `json:"coverage"`
+	Compliance       *ComplianceReport          `json:"compliance"`
+	EndpointStats    map[string]*EndpointStats  `json:"endpoint_stats"`
+	RequestHistory   []RequestRecord            `json:"request_history"`
+	ResponseHistory  []ResponseRecord           `json:"response_history"`
+	Config           *ReporterConfig            `json:"config"`
 }
 
 type CoverageReport struct {
@@ -114,11 +130,14 @@ type ResponseRecord struct {
 
 func NewReporter() *Reporter {
 	config := &ReporterConfig{
-		MaxHistorySize:  1000,
-		ReportInterval:  5 * time.Minute,
-		AutoSave:        true,
-		SavePath:        "./reports",
-		IncludeExamples: true,
+		MaxHistorySize:   1000,
+		ReportInterval:   5 * time.Minute,
+		AutoSave:         true,
+		SavePath:         "./reports",
+		IncludeExamples:  true,
+		PersistData:      true,
+		DataFile:         "./validation-data.json",
+		AutoSaveInterval: 30 * time.Second,
 	}
 
 	return &Reporter{
@@ -199,6 +218,16 @@ func (r *Reporter) RecordRequest(ctx context.Context, endpoint *openapi.Endpoint
 
 	r.addRequestToHistory(record)
 	r.updateComplianceViolations(result)
+
+	// Auto-save if configured (async to avoid blocking)
+	if r.config.PersistData && r.config.AutoSave {
+		go func() {
+			if err := r.SaveData(); err != nil {
+				// Log error but don't fail the request
+				fmt.Printf("Warning: failed to auto-save validation data: %v\n", err)
+			}
+		}()
+	}
 }
 
 func (r *Reporter) RecordResponse(ctx context.Context, endpoint *openapi.Endpoint, result *ResponseValidationResult) {
@@ -256,6 +285,16 @@ func (r *Reporter) RecordResponse(ctx context.Context, endpoint *openapi.Endpoin
 
 	r.addResponseToHistory(record)
 	r.updateResponseComplianceViolations(result)
+
+	// Auto-save if configured (async to avoid blocking)
+	if r.config.PersistData && r.config.AutoSave {
+		go func() {
+			if err := r.SaveData(); err != nil {
+				// Log error but don't fail the request
+				fmt.Printf("Warning: failed to auto-save validation data: %v\n", err)
+			}
+		}()
+	}
 }
 
 func (r *Reporter) GenerateCoverageReport(spec *openapi.Specification) *CoverageReport {
@@ -643,6 +682,131 @@ func (r *Reporter) GetTopViolations(limit int) []ComplianceViolation {
 	}
 
 	return violations
+}
+
+// LoadData loads persistent validation data from file
+func (r *Reporter) LoadData() error {
+	if !r.config.PersistData || r.config.DataFile == "" {
+		return nil
+	}
+
+	data, err := os.ReadFile(r.config.DataFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File doesn't exist, this is OK for the first run
+			return nil
+		}
+		return fmt.Errorf("failed to read data file: %w", err)
+	}
+
+	var persistentData PersistentReporterData
+	if err := json.Unmarshal(data, &persistentData); err != nil {
+		return fmt.Errorf("failed to unmarshal data: %w", err)
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Load the data into the reporter
+	if persistentData.Coverage != nil {
+		r.coverage = persistentData.Coverage
+	}
+	if persistentData.Compliance != nil {
+		r.compliance = persistentData.Compliance
+	}
+	if persistentData.EndpointStats != nil {
+		r.endpointStats = persistentData.EndpointStats
+	}
+	if persistentData.RequestHistory != nil {
+		r.requestHistory = persistentData.RequestHistory
+	}
+	if persistentData.ResponseHistory != nil {
+		r.responseHistory = persistentData.ResponseHistory
+	}
+
+	return nil
+}
+
+// SaveData saves current validation data to file
+func (r *Reporter) SaveData() error {
+	if !r.config.PersistData || r.config.DataFile == "" {
+		return nil
+	}
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	persistentData := PersistentReporterData{
+		Version:         "1.0",
+		LastUpdated:     time.Now(),
+		Coverage:        r.coverage,
+		Compliance:      r.compliance,
+		EndpointStats:   r.endpointStats,
+		RequestHistory:  r.requestHistory,
+		ResponseHistory: r.responseHistory,
+		Config:          r.config,
+	}
+
+	data, err := json.MarshalIndent(persistentData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal data: %w", err)
+	}
+
+	// Ensure the directory exists
+	if dir := filepath.Dir(r.config.DataFile); dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create directory: %w", err)
+		}
+	}
+
+	if err := os.WriteFile(r.config.DataFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write data file: %w", err)
+	}
+
+	return nil
+}
+
+// NewReporterWithConfig creates a new reporter with custom configuration
+func NewReporterWithConfig(config *ReporterConfig) *Reporter {
+	if config == nil {
+		return NewReporter()
+	}
+
+	reporter := &Reporter{
+		coverage:        &CoverageReport{Endpoints: make(map[string]*EndpointStats)},
+		compliance:      &ComplianceReport{ErrorsByType: make(map[string]int), ErrorsByEndpoint: make(map[string]int)},
+		endpointStats:   make(map[string]*EndpointStats),
+		requestHistory:  make([]RequestRecord, 0, config.MaxHistorySize),
+		responseHistory: make([]ResponseRecord, 0, config.MaxHistorySize),
+		config:          config,
+	}
+
+	// Try to load existing data
+	if err := reporter.LoadData(); err != nil {
+		// Log error but continue - this is non-fatal
+		fmt.Printf("Warning: failed to load validation data: %v\n", err)
+	}
+
+	return reporter
+}
+
+// StartAutoSave starts automatic saving of validation data
+func (r *Reporter) StartAutoSave() {
+	if !r.config.PersistData || r.config.AutoSaveInterval <= 0 {
+		return
+	}
+
+	go func() {
+		ticker := time.NewTicker(r.config.AutoSaveInterval)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			if err := r.SaveData(); err != nil {
+				// Log error but continue - this is non-fatal
+				fmt.Printf("Warning: failed to auto-save validation data: %v\n", err)
+			}
+		}
+	}()
 }
 
 func (r *Reporter) Reset() {

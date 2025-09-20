@@ -197,6 +197,13 @@ type ValidationConfigWrapper struct {
 	ReportInterval       time.Duration `yaml:"report_interval"`
 	MaxConcurrentValidations int       `yaml:"max_concurrent_validations"`
 	ValidationTimeout    time.Duration `yaml:"validation_timeout"`
+	// Data persistence configuration
+	PersistData          bool          `yaml:"persist_data"`
+	DataFile             string        `yaml:"data_file"`
+	AutoSave             bool          `yaml:"auto_save"`
+	AutoSaveInterval     time.Duration `yaml:"auto_save_interval"`
+	MaxHistorySize       int           `yaml:"max_history_size"`
+	IncludeExamples      bool          `yaml:"include_examples"`
 }
 
 // ToStateConfig converts the wrapper to the state package config
@@ -232,5 +239,40 @@ func (c *ValidationConfigWrapper) ToValidationConfig() *validation.Config {
 		ReportInterval:          c.ReportInterval,
 		MaxConcurrentValidations: c.MaxConcurrentValidations,
 		ValidationTimeout:       c.ValidationTimeout,
+	}
+}
+
+// ToReporterConfig converts the wrapper to the validation reporter config
+func (c *ValidationConfigWrapper) ToReporterConfig() *validation.ReporterConfig {
+	// Set defaults for missing values
+	maxHistorySize := c.MaxHistorySize
+	if maxHistorySize == 0 {
+		maxHistorySize = 1000
+	}
+
+	dataFile := c.DataFile
+	if dataFile == "" {
+		dataFile = "./validation-data.json"
+	}
+
+	autoSaveInterval := c.AutoSaveInterval
+	if autoSaveInterval == 0 {
+		autoSaveInterval = 30 * time.Second
+	}
+
+	reportPath := c.ReportPath
+	if reportPath == "" {
+		reportPath = "./reports"
+	}
+
+	return &validation.ReporterConfig{
+		MaxHistorySize:   maxHistorySize,
+		ReportInterval:   c.ReportInterval,
+		AutoSave:         c.AutoSave,
+		SavePath:         reportPath,
+		IncludeExamples:  c.IncludeExamples,
+		PersistData:      c.PersistData,
+		DataFile:         dataFile,
+		AutoSaveInterval: autoSaveInterval,
 	}
 }

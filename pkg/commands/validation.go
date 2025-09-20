@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -125,6 +126,7 @@ func NewValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configF
 		output    string
 		format    string
 		threshold float64
+		dataFile  string
 	)
 
 	cmd := &cobra.Command{
@@ -147,12 +149,26 @@ func NewValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configF
 				return fmt.Errorf("failed to load config: %w", err)
 			}
 
-			// Create validation manager
-			validationCfg := cfg.Validation.ToValidationConfig()
-			validationManager := validation.NewValidationManager(spec, validationCfg)
-
-			// Get reporter
-			reporter := validationManager.GetReporter()
+			// Create reporter with persistent data
+			var reporter *validation.Reporter
+			if dataFile != "" {
+				// Use custom data file
+				reporterConfig := &validation.ReporterConfig{
+					MaxHistorySize:   1000,
+					ReportInterval:   5 * time.Minute,
+					AutoSave:         true,
+					SavePath:         "./reports",
+					IncludeExamples:  true,
+					PersistData:      true,
+					DataFile:         dataFile,
+					AutoSaveInterval: 30 * time.Second,
+				}
+				reporter = validation.NewReporterWithConfig(reporterConfig)
+			} else {
+				// Use configuration from config file
+				reporterConfig := cfg.Validation.ToReporterConfig()
+				reporter = validation.NewReporterWithConfig(reporterConfig)
+			}
 
 			// Generate coverage report
 			coverageReport := reporter.GenerateCoverageReport(spec)
@@ -208,6 +224,7 @@ func NewValidateCoverageCommand(ctx context.Context, logger *zap.Logger, configF
 	cmd.Flags().StringVarP(&output, "output", "o", "", "Output file (default: stdout)")
 	cmd.Flags().StringVar(&format, "format", "text", "Output format (json, html, text)")
 	cmd.Flags().Float64Var(&threshold, "threshold", 0.0, "Minimum coverage threshold (0-100)")
+	cmd.Flags().StringVarP(&dataFile, "data-file", "d", "", "Validation data file (default: ./validation-data.json)")
 
 	return cmd
 }
@@ -217,6 +234,7 @@ func NewValidateComplianceCommand(ctx context.Context, logger *zap.Logger, confi
 		output    string
 		format    string
 		threshold float64
+		dataFile  string
 	)
 
 	cmd := &cobra.Command{
@@ -225,26 +243,32 @@ func NewValidateComplianceCommand(ctx context.Context, logger *zap.Logger, confi
 		Long:  "Generate a compliance report showing validation errors and warnings",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			specFile := args[0]
-
-			// Load and parse OpenAPI specification
-			spec, err := loadOpenAPISpec(specFile, logger)
-			if err != nil {
-				return fmt.Errorf("failed to load OpenAPI spec: %w", err)
-			}
-
 			// Load configuration
 			cfg, err := loadConfig(*configFile)
 			if err != nil {
 				return fmt.Errorf("failed to load config: %w", err)
 			}
 
-			// Create validation manager
-			validationCfg := cfg.Validation.ToValidationConfig()
-			validationManager := validation.NewValidationManager(spec, validationCfg)
-
-			// Get reporter
-			reporter := validationManager.GetReporter()
+			// Create reporter with persistent data
+			var reporter *validation.Reporter
+			if dataFile != "" {
+				// Use custom data file
+				reporterConfig := &validation.ReporterConfig{
+					MaxHistorySize:   1000,
+					ReportInterval:   5 * time.Minute,
+					AutoSave:         true,
+					SavePath:         "./reports",
+					IncludeExamples:  true,
+					PersistData:      true,
+					DataFile:         dataFile,
+					AutoSaveInterval: 30 * time.Second,
+				}
+				reporter = validation.NewReporterWithConfig(reporterConfig)
+			} else {
+				// Use configuration from config file
+				reporterConfig := cfg.Validation.ToReporterConfig()
+				reporter = validation.NewReporterWithConfig(reporterConfig)
+			}
 
 			// Generate compliance report
 			complianceReport := reporter.GenerateComplianceReport()
@@ -300,6 +324,7 @@ func NewValidateComplianceCommand(ctx context.Context, logger *zap.Logger, confi
 	cmd.Flags().StringVarP(&output, "output", "o", "", "Output file (default: stdout)")
 	cmd.Flags().StringVar(&format, "format", "text", "Output format (json, junit, text)")
 	cmd.Flags().Float64Var(&threshold, "threshold", 0.0, "Minimum compliance threshold (0-100)")
+	cmd.Flags().StringVarP(&dataFile, "data-file", "d", "", "Validation data file (default: ./validation-data.json)")
 
 	return cmd
 }
