@@ -21,6 +21,37 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Pet'
+              examples:
+                small_list:
+                  summary: "Small list of pets"
+                  value:
+                    - id: 1
+                      name: "Buddy"
+                      status: "available"
+                    - id: 2
+                      name: "Max"
+                      status: "pending"
+                large_list:
+                  summary: "Large list of pets"
+                  value:
+                    - id: 1
+                      name: "Buddy"
+                      status: "available"
+                    - id: 2
+                      name: "Max"
+                      status: "pending"
+                    - id: 3
+                      name: "Charlie"
+                      status: "sold"
+                    - id: 4
+                      name: "Luna"
+                      status: "available"
+                    - id: 5
+                      name: "Rocky"
+                      status: "available"
+                empty_list:
+                  summary: "Empty list"
+                  value: []
     post:
       summary: Create a pet
       operationId: createPet
@@ -56,6 +87,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pet'
+              examples:
+                available_pet:
+                  summary: "Available pet"
+                  value:
+                    id: 1
+                    name: "Buddy"
+                    status: "available"
+                pending_pet:
+                  summary: "Pending pet"
+                  value:
+                    id: 2
+                    name: "Max"
+                    status: "pending"
+                sold_pet:
+                  summary: "Sold pet"
+                  value:
+                    id: 3
+                    name: "Charlie"
+                    status: "sold"
         '404':
           description: Pet not found
 

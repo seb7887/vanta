@@ -62,8 +62,9 @@ type Response struct {
 
 // MediaTypeObject represents a media type
 type MediaTypeObject struct {
-	Schema  *Schema     `json:"schema,omitempty"`
-	Example interface{} `json:"example,omitempty"`
+	Schema   *Schema                   `json:"schema,omitempty"`
+	Example  interface{}               `json:"example,omitempty"`
+	Examples map[string]ExampleObject  `json:"examples,omitempty"`
 }
 
 // Header represents a header
@@ -72,25 +73,34 @@ type Header struct {
 	Schema      *Schema `json:"schema,omitempty"`
 }
 
+// ExampleObject represents an example value with metadata
+type ExampleObject struct {
+	Summary     string      `json:"summary,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Value       interface{} `json:"value,omitempty"`
+	ExternalValue string    `json:"externalValue,omitempty"`
+}
+
 // Schema represents a JSON Schema
 type Schema struct {
-	Type                 string            `json:"type,omitempty"`
-	Format               string            `json:"format,omitempty"`
-	Description          string            `json:"description,omitempty"`
-	Enum                 []interface{}     `json:"enum,omitempty"`
-	Default              interface{}       `json:"default,omitempty"`
-	Example              interface{}       `json:"example,omitempty"`
-	Properties           map[string]*Schema `json:"properties,omitempty"`
-	Items                *Schema           `json:"items,omitempty"`
-	Required             []string          `json:"required,omitempty"`
-	AdditionalProperties interface{}       `json:"additionalProperties,omitempty"`
-	Pattern              string            `json:"pattern,omitempty"`
-	Minimum              *float64          `json:"minimum,omitempty"`
-	Maximum              *float64          `json:"maximum,omitempty"`
-	MinItems             *int              `json:"minItems,omitempty"`
-	MaxItems             *int              `json:"maxItems,omitempty"`
-	MinLength            *int              `json:"minLength,omitempty"`
-	MaxLength            *int              `json:"maxLength,omitempty"`
+	Type                 string                   `json:"type,omitempty"`
+	Format               string                   `json:"format,omitempty"`
+	Description          string                   `json:"description,omitempty"`
+	Enum                 []interface{}            `json:"enum,omitempty"`
+	Default              interface{}              `json:"default,omitempty"`
+	Example              interface{}              `json:"example,omitempty"`
+	Examples             map[string]ExampleObject `json:"examples,omitempty"`
+	Properties           map[string]*Schema       `json:"properties,omitempty"`
+	Items                *Schema                  `json:"items,omitempty"`
+	Required             []string                 `json:"required,omitempty"`
+	AdditionalProperties interface{}              `json:"additionalProperties,omitempty"`
+	Pattern              string                   `json:"pattern,omitempty"`
+	Minimum              *float64                 `json:"minimum,omitempty"`
+	Maximum              *float64                 `json:"maximum,omitempty"`
+	MinItems             *int                     `json:"minItems,omitempty"`
+	MaxItems             *int                     `json:"maxItems,omitempty"`
+	MinLength            *int                     `json:"minLength,omitempty"`
+	MaxLength            *int                     `json:"maxLength,omitempty"`
 }
 
 // SecurityRequirement represents a security requirement
@@ -108,13 +118,14 @@ type Endpoint struct {
 
 // GenerationContext provides context for data generation
 type GenerationContext struct {
-	MaxDepth     int
-	CurrentDepth int
-	Visited      map[string]bool
-	ArraySizes   map[string]int
-	Required     bool
-	Parent       string
-	Locale       string
-	Seed         int64
-	Timestamp    time.Time
+	MaxDepth        int
+	CurrentDepth    int
+	Visited         map[string]bool
+	ArraySizes      map[string]int
+	Required        bool
+	Parent          string
+	Locale          string
+	Seed            int64
+	Timestamp       time.Time
+	RequestedExample string  // Header X-Mock-Example value for selecting specific examples
 }

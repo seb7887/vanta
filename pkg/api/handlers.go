@@ -38,16 +38,40 @@ func MockHandler(spec *openapi.Specification, generator openapi.DataGenerator, l
 		responseCode := determineResponseCode(endpoint)
 		
 		// Get response schema for the status code
-		responseSchema, mediaType := getResponseSchema(endpoint, responseCode)
+		responseSchema, mediaType, mediaTypeObj := getResponseSchemaWithMediaType(endpoint, responseCode)
 		if responseSchema == nil {
 			return handleNoResponseSchema(ctx, responseCode, logger)
 		}
-		
+
+		// Extract requested example from header
+		requestedExample := string(ctx.Request.Header.Peek("X-Mock-Example"))
+
+		// Copy examples from MediaTypeObject to Schema if available
+		if mediaTypeObj != nil && len(mediaTypeObj.Examples) > 0 {
+			logger.Debug("Found examples in MediaTypeObject",
+				zap.Int("example_count", len(mediaTypeObj.Examples)),
+				zap.String("requested_example", requestedExample),
+			)
+
+			if responseSchema.Examples == nil {
+				responseSchema.Examples = make(map[string]openapi.ExampleObject)
+			}
+			for name, example := range mediaTypeObj.Examples {
+				responseSchema.Examples[name] = example
+				logger.Debug("Added example to schema",
+					zap.String("example_name", name),
+					zap.Any("example_value", example.Value),
+				)
+			}
+		} else {
+			logger.Debug("No examples found in MediaTypeObject")
+		}
+
 		logger.Debug("Generating mock response",
 			zap.String("response_code", responseCode),
 			zap.String("media_type", mediaType),
 		)
-		
+
 		// Create generation context
 		var seed int64
 		if defaultGen, ok := generator.(*openapi.DefaultDataGenerator); ok {
@@ -57,13 +81,14 @@ func MockHandler(spec *openapi.Specification, generator openapi.DataGenerator, l
 		}
 
 		genCtx := &openapi.GenerationContext{
-			MaxDepth:     5,
-			CurrentDepth: 0,
-			Visited:      make(map[string]bool),
-			ArraySizes:   make(map[string]int),
-			Locale:       "en",
-			Seed:         seed,
-			Timestamp:    ctx.Time(),
+			MaxDepth:        5,
+			CurrentDepth:    0,
+			Visited:         make(map[string]bool),
+			ArraySizes:      make(map[string]int),
+			Locale:          "en",
+			Seed:            seed,
+			Timestamp:       ctx.Time(),
+			RequestedExample: requestedExample,
 		}
 		
 		// Generate mock data
@@ -87,6 +112,9 @@ func MockHandlerWithConfig(spec *openapi.Specification, generator openapi.DataGe
 		method := string(ctx.Method())
 		path := string(ctx.Path())
 
+		// Extract requested example from header
+		requestedExample := string(ctx.Request.Header.Peek("X-Mock-Example"))
+
 		logger.Debug("Processing mock request with config",
 			zap.String("method", method),
 			zap.String("path", path),
@@ -95,6 +123,7 @@ func MockHandlerWithConfig(spec *openapi.Specification, generator openapi.DataGe
 			zap.Int("max_depth", mockConfig.MaxDepth),
 			zap.Int("default_array_size", mockConfig.DefaultArraySize),
 			zap.Bool("prefer_examples", mockConfig.PreferExamples),
+			zap.String("requested_example", requestedExample),
 		)
 
 		// Find matching endpoint in the OpenAPI spec
@@ -112,9 +141,30 @@ func MockHandlerWithConfig(spec *openapi.Specification, generator openapi.DataGe
 		responseCode := determineResponseCode(endpoint)
 
 		// Get response schema for the status code
-		responseSchema, mediaType := getResponseSchema(endpoint, responseCode)
+		responseSchema, mediaType, mediaTypeObj := getResponseSchemaWithMediaType(endpoint, responseCode)
 		if responseSchema == nil {
 			return handleNoResponseSchema(ctx, responseCode, logger)
+		}
+
+		// Copy examples from MediaTypeObject to Schema if available
+		if mediaTypeObj != nil && len(mediaTypeObj.Examples) > 0 {
+			logger.Debug("Found examples in MediaTypeObject",
+				zap.Int("example_count", len(mediaTypeObj.Examples)),
+				zap.String("requested_example", requestedExample),
+			)
+
+			if responseSchema.Examples == nil {
+				responseSchema.Examples = make(map[string]openapi.ExampleObject)
+			}
+			for name, example := range mediaTypeObj.Examples {
+				responseSchema.Examples[name] = example
+				logger.Debug("Added example to schema",
+					zap.String("example_name", name),
+					zap.Any("example_value", example.Value),
+				)
+			}
+		} else {
+			logger.Debug("No examples found in MediaTypeObject")
 		}
 
 		logger.Debug("Generating mock response with config",
@@ -132,12 +182,13 @@ func MockHandlerWithConfig(spec *openapi.Specification, generator openapi.DataGe
 			}
 		}
 
-		genCtx := openapi.NewGenerationContextWithConfig(
+		genCtx := openapi.NewGenerationContextWithExample(
 			mockConfig.MaxDepth,
 			seed,
 			mockConfig.Locale,
 			mockConfig.DefaultArraySize,
 			mockConfig.PreferExamples,
+			requestedExample,
 		)
 		genCtx.Timestamp = ctx.Time()
 
@@ -254,25 +305,51 @@ func getResponseSchema(operation *openapi.Operation, statusCode string) (*openap
 	if operation == nil || operation.Responses == nil {
 		return nil, ""
 	}
-	
+
 	response, exists := operation.Responses[statusCode]
 	if !exists {
 		return nil, ""
 	}
-	
+
 	// Look for JSON content first
 	if mediaObj, exists := response.Content["application/json"]; exists && mediaObj.Schema != nil {
 		return mediaObj.Schema, "application/json"
 	}
-	
+
 	// Fall back to any available content type
 	for mediaType, mediaObj := range response.Content {
 		if mediaObj.Schema != nil {
 			return mediaObj.Schema, mediaType
 		}
 	}
-	
+
 	return nil, ""
+}
+
+// getResponseSchemaWithMediaType extracts the response schema and MediaTypeObject for a given status code
+func getResponseSchemaWithMediaType(operation *openapi.Operation, statusCode string) (*openapi.Schema, string, *openapi.MediaTypeObject) {
+	if operation == nil || operation.Responses == nil {
+		return nil, "", nil
+	}
+
+	response, exists := operation.Responses[statusCode]
+	if !exists {
+		return nil, "", nil
+	}
+
+	// Look for JSON content first
+	if mediaObj, exists := response.Content["application/json"]; exists && mediaObj.Schema != nil {
+		return mediaObj.Schema, "application/json", &mediaObj
+	}
+
+	// Fall back to any available content type
+	for mediaType, mediaObj := range response.Content {
+		if mediaObj.Schema != nil {
+			return mediaObj.Schema, mediaType, &mediaObj
+		}
+	}
+
+	return nil, "", nil
 }
 
 // setResponseHeaders sets appropriate response headers

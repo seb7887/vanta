@@ -48,18 +48,33 @@ func NewGenerationContextWithConfig(maxDepth int, seed int64, locale string, def
 	}
 }
 
+// NewGenerationContextWithExample creates a new generation context with example selection
+func NewGenerationContextWithExample(maxDepth int, seed int64, locale string, defaultArraySize int, preferExamples bool, requestedExample string) *GenerationContext {
+	return &GenerationContext{
+		MaxDepth:        maxDepth,
+		CurrentDepth:    0,
+		Visited:         make(map[string]bool),
+		ArraySizes:      make(map[string]int),
+		Locale:          locale,
+		Seed:            seed,
+		Timestamp:       time.Now(),
+		RequestedExample: requestedExample,
+	}
+}
+
 // Clone creates a deep copy of the generation context
 func (ctx *GenerationContext) Clone() *GenerationContext {
 	newCtx := &GenerationContext{
-		MaxDepth:     ctx.MaxDepth,
-		CurrentDepth: ctx.CurrentDepth,
-		Required:     ctx.Required,
-		Parent:       ctx.Parent,
-		Locale:       ctx.Locale,
-		Seed:         ctx.Seed,
-		Timestamp:    ctx.Timestamp,
-		Visited:      make(map[string]bool),
-		ArraySizes:   make(map[string]int),
+		MaxDepth:        ctx.MaxDepth,
+		CurrentDepth:    ctx.CurrentDepth,
+		Required:        ctx.Required,
+		Parent:          ctx.Parent,
+		Locale:          ctx.Locale,
+		Seed:            ctx.Seed,
+		Timestamp:       ctx.Timestamp,
+		RequestedExample: ctx.RequestedExample,
+		Visited:         make(map[string]bool),
+		ArraySizes:      make(map[string]int),
 	}
 	
 	// Deep copy maps

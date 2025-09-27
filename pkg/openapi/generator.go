@@ -88,9 +88,9 @@ func (g *DefaultDataGenerator) Generate(schema *Schema, ctx *GenerationContext) 
 		return nil, nil
 	}
 	
-	// Prioritize example if available
-	if schema.Example != nil {
-		return schema.Example, nil
+	// Select example based on context and strategy
+	if selectedExample := g.selectExample(schema, ctx); selectedExample != nil {
+		return selectedExample, nil
 	}
 	
 	// Handle enum values
@@ -322,7 +322,56 @@ func (g *DefaultDataGenerator) generateObject(schema *Schema, ctx *GenerationCon
 			result[propName] = value
 		}
 	}
-	
+
 	return result, nil
+}
+
+// selectExample selects an appropriate example based on the context and available examples
+func (g *DefaultDataGenerator) selectExample(schema *Schema, ctx *GenerationContext) interface{} {
+	// If no examples available in schema, try single example
+	if len(schema.Examples) == 0 {
+		return schema.Example
+	}
+
+	// Handle requested example from header
+	if ctx.RequestedExample != "" {
+		if ctx.RequestedExample == "random" {
+			return g.selectRandomExample(schema.Examples)
+		}
+
+		// Look for specific example by name
+		if example, exists := schema.Examples[ctx.RequestedExample]; exists {
+			return example.Value
+		}
+	}
+
+	// Fallback to single example if available
+	if schema.Example != nil {
+		return schema.Example
+	}
+
+	// Use first available example from Examples map
+	for _, example := range schema.Examples {
+		return example.Value
+	}
+
+	return nil
+}
+
+// selectRandomExample randomly selects an example from the available examples
+func (g *DefaultDataGenerator) selectRandomExample(examples map[string]ExampleObject) interface{} {
+	if len(examples) == 0 {
+		return nil
+	}
+
+	// Convert map to slice for random selection
+	exampleSlice := make([]ExampleObject, 0, len(examples))
+	for _, example := range examples {
+		exampleSlice = append(exampleSlice, example)
+	}
+
+	// Select random example
+	randomIndex := g.faker.IntRange(0, len(exampleSlice)-1)
+	return exampleSlice[randomIndex].Value
 }
 

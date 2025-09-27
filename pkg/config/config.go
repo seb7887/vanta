@@ -41,6 +41,8 @@ type MockConfig struct {
 	MaxDepth         int    `yaml:"max_depth"`          // Maximum depth for nested object generation
 	DefaultArraySize int    `yaml:"default_array_size"` // Default size for arrays when not specified
 	PreferExamples   bool   `yaml:"prefer_examples"`    // Prefer examples from OpenAPI spec when available
+	ExampleStrategy  string `yaml:"example_strategy"`   // Strategy for selecting examples: "header", "first", "random"
+	DefaultExample   string `yaml:"default_example"`    // Default example name to use when no header specified
 }
 
 // LoggingConfig holds logging configuration
