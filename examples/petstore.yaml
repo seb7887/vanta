@@ -108,6 +108,30 @@ paths:
                     status: "sold"
         '404':
           description: Pet not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+                  code:
+                    type: integer
+              examples:
+                pet_not_found:
+                  summary: "Pet not found"
+                  value:
+                    error: "NOT_FOUND"
+                    message: "Pet with the specified ID was not found"
+                    code: 404
+                invalid_pet_id:
+                  summary: "Invalid pet ID format"
+                  value:
+                    error: "INVALID_ID"
+                    message: "Pet ID must be a positive integer"
+                    code: 404
 
   /health:
     get:

@@ -1,0 +1,152 @@
+# Vanta Configuration Example: Response Selection
+# This configuration demonstrates how to set up Vanta for effective response selection testing
+
+# Basic server configuration
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "120s"
+
+# OpenAPI specification
+openapi:
+  spec_path: "./examples/petstore.yaml"  # Path to your OpenAPI spec
+  base_path: ""
+  strict_validation: true
+
+# Mock data generation configuration optimized for response selection
+mock:
+  # Enable example preference - CRITICAL for response selection to work
+  prefer_examples: true
+
+  # Response selection strategy
+  example_strategy: "header"        # "header", "first", "random"
+  default_example: "success"        # Default example when no X-Mock-Example header
+
+  # Data generation settings (used when no examples available)
+  seed: 12345                       # Fixed seed for reproducible testing
+  locale: "en"
+  max_depth: 5
+  default_array_size: 3
+
+# Logging configuration for debugging response selection
+logging:
+  level: "debug"                    # Use debug to see example selection logic
+  format: "json"
+  file: "./logs/vanta.log"
+  max_size: 100
+  max_backups: 5
+  max_age: 30
+
+# Request/Response recording for testing analysis
+recording:
+  enabled: true
+  storage:
+    type: "memory"
+    max_entries: 1000
+
+  # Record both requests and responses to analyze example selection
+  include_request_body: true
+  include_response_body: true
+  max_body_size: 1048576  # 1MB
+
+# CORS configuration for web-based testing
+cors:
+  enabled: true
+  allowed_origins: ["*"]
+  allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+  allowed_headers: ["*", "X-Mock-Example"]  # Include X-Mock-Example header
+  expose_headers: ["X-Request-ID", "X-Mock-Example-Used"]
+
+# Rate limiting for load testing with different examples
+rate_limit:
+  enabled: false  # Disable for testing to avoid interference
+
+# Plugin configuration for enhanced testing
+plugins:
+  # Request/Response logger to track example usage
+  - name: "logger"
+    enabled: true
+    config:
+      log_level: "info"
+      log_request_headers: true
+      log_response_headers: true
+      log_request_body: true
+      log_response_body: true
+      max_body_size: 1024
+
+  # Custom header injector for testing
+  - name: "example_plugin"
+    enabled: true
+    config:
+      header_name: "X-Mock-Example-Used"  # Shows which example was actually used
+      header_value: "dynamic"  # Will be replaced by actual example name
+
+# Validation configuration for comprehensive testing
+validation:
+  enabled: true
+  strict_mode: true
+
+  # Validate both requests and responses
+  validate_requests: true
+  validate_responses: true
+
+  # Generate detailed validation reports
+  report_format: "json"
+  output_file: "./validation-report.json"
+
+# Chaos engineering for robust testing (optional)
+chaos:
+  enabled: false  # Enable for advanced testing scenarios
+  config:
+    latency:
+      enabled: false
+    errors:
+      enabled: false
+
+# Metrics collection for performance analysis
+metrics:
+  enabled: true
+  prometheus:
+    enabled: true
+    path: "/metrics"
+
+  # Custom metrics for response selection tracking
+  custom_metrics:
+    - name: "example_selection_total"
+      type: "counter"
+      description: "Total number of example selections"
+      labels: ["example_name", "endpoint", "method"]
+
+# TUI configuration for interactive testing
+tui:
+  enabled: false  # Set to true for interactive development
+
+# Examples of common testing scenarios using this configuration:
+#
+# 1. Test specific user types:
+#    curl -H "X-Mock-Example: admin_user" http://localhost:8080/users/123
+#    curl -H "X-Mock-Example: regular_user" http://localhost:8080/users/123
+#
+# 2. Test different response sizes:
+#    curl -H "X-Mock-Example: empty_list" http://localhost:8080/products
+#    curl -H "X-Mock-Example: large_list" http://localhost:8080/products
+#
+# 3. Test error scenarios:
+#    curl -H "X-Mock-Example: validation_error" http://localhost:8080/invalid-data
+#    curl -H "X-Mock-Example: server_error" http://localhost:8080/failing-endpoint
+#
+# 4. Random testing:
+#    curl -H "X-Mock-Example: random" http://localhost:8080/any-endpoint
+#
+# 5. Fallback testing (no header):
+#    curl http://localhost:8080/users/123  # Uses default_example: "success"
+
+# Additional configuration notes:
+# - Set prefer_examples: true to prioritize OpenAPI examples
+# - Use example_strategy: "header" to enable X-Mock-Example header support
+# - Set logging level to "debug" to see example selection decisions
+# - Enable recording to analyze request/response patterns
+# - Use fixed seed for reproducible test results
+# - CORS headers include X-Mock-Example for web-based testing tools

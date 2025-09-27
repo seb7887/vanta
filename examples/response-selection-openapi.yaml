@@ -1,0 +1,748 @@
+openapi: 3.0.3
+info:
+  title: Response Selection Demo API
+  description: |
+    A comprehensive OpenAPI specification demonstrating Vanta's response selection functionality.
+    This spec includes multiple examples for various testing scenarios including user roles,
+    error conditions, data variations, and edge cases.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local Vanta server
+
+paths:
+  # User Management Endpoints
+  /users:
+    get:
+      summary: List users
+      description: Get a list of users with different scenarios
+      operationId: listUsers
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, user, guest]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, suspended, deleted]
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+              examples:
+                empty_list:
+                  summary: "Empty user list"
+                  description: "No users found - useful for testing empty states"
+                  value:
+                    users: []
+                    total: 0
+                    page: 1
+                single_user:
+                  summary: "Single user result"
+                  description: "One user in the system"
+                  value:
+                    users:
+                      - id: 1
+                        username: "john_doe"
+                        email: "john@example.com"
+                        role: "user"
+                        status: "active"
+                    total: 1
+                    page: 1
+                multiple_users:
+                  summary: "Multiple users"
+                  description: "Standard list with multiple users"
+                  value:
+                    users:
+                      - id: 1
+                        username: "admin"
+                        email: "admin@example.com"
+                        role: "admin"
+                        status: "active"
+                      - id: 2
+                        username: "user1"
+                        email: "user1@example.com"
+                        role: "user"
+                        status: "active"
+                      - id: 3
+                        username: "guest1"
+                        email: "guest1@example.com"
+                        role: "guest"
+                        status: "active"
+                    total: 3
+                    page: 1
+                large_dataset:
+                  summary: "Large user dataset"
+                  description: "Many users for pagination testing"
+                  value:
+                    users:
+                      - id: 1
+                        username: "admin"
+                        email: "admin@example.com"
+                        role: "admin"
+                        status: "active"
+                      - id: 2
+                        username: "user1"
+                        email: "user1@example.com"
+                        role: "user"
+                        status: "active"
+                      - id: 3
+                        username: "user2"
+                        email: "user2@example.com"
+                        role: "user"
+                        status: "suspended"
+                      - id: 4
+                        username: "user3"
+                        email: "user3@example.com"
+                        role: "user"
+                        status: "active"
+                      - id: 5
+                        username: "guest1"
+                        email: "guest1@example.com"
+                        role: "guest"
+                        status: "active"
+                    total: 50
+                    page: 1
+
+    post:
+      summary: Create user
+      description: Create a new user
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              examples:
+                admin_created:
+                  summary: "Administrator user created"
+                  value:
+                    id: 1
+                    username: "admin"
+                    email: "admin@example.com"
+                    role: "admin"
+                    status: "active"
+                    created_at: "2025-01-15T10:30:00Z"
+                user_created:
+                  summary: "Regular user created"
+                  value:
+                    id: 2
+                    username: "newuser"
+                    email: "newuser@example.com"
+                    role: "user"
+                    status: "active"
+                    created_at: "2025-01-15T10:30:00Z"
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missing_email:
+                  summary: "Missing email field"
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Email is required"
+                    code: 400
+                    details:
+                      field: "email"
+                      reason: "missing_required_field"
+                invalid_email:
+                  summary: "Invalid email format"
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Invalid email format"
+                    code: 400
+                    details:
+                      field: "email"
+                      reason: "invalid_format"
+                username_taken:
+                  summary: "Username already exists"
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Username is already taken"
+                    code: 400
+                    details:
+                      field: "username"
+                      reason: "duplicate_value"
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Get user by ID
+      description: Retrieve a specific user
+      operationId: getUserById
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailed'
+              examples:
+                admin_user:
+                  summary: "Administrator user"
+                  description: "Full admin with all permissions"
+                  value:
+                    id: 1
+                    username: "admin"
+                    email: "admin@example.com"
+                    role: "admin"
+                    status: "active"
+                    permissions: ["read", "write", "delete", "admin"]
+                    profile:
+                      first_name: "Admin"
+                      last_name: "User"
+                      created_at: "2025-01-01T00:00:00Z"
+                      last_login: "2025-01-15T10:00:00Z"
+                    stats:
+                      login_count: 150
+                      last_active: "2025-01-15T10:00:00Z"
+                regular_user:
+                  summary: "Regular user"
+                  description: "Standard user with basic permissions"
+                  value:
+                    id: 2
+                    username: "user1"
+                    email: "user1@example.com"
+                    role: "user"
+                    status: "active"
+                    permissions: ["read", "write"]
+                    profile:
+                      first_name: "John"
+                      last_name: "Doe"
+                      created_at: "2025-01-02T10:00:00Z"
+                      last_login: "2025-01-15T09:30:00Z"
+                    stats:
+                      login_count: 25
+                      last_active: "2025-01-15T09:30:00Z"
+                guest_user:
+                  summary: "Guest user"
+                  description: "Limited permissions guest user"
+                  value:
+                    id: 3
+                    username: "guest1"
+                    email: "guest1@example.com"
+                    role: "guest"
+                    status: "active"
+                    permissions: ["read"]
+                    profile:
+                      first_name: "Guest"
+                      last_name: "User"
+                      created_at: "2025-01-15T08:00:00Z"
+                      last_login: "2025-01-15T10:15:00Z"
+                    stats:
+                      login_count: 3
+                      last_active: "2025-01-15T10:15:00Z"
+                suspended_user:
+                  summary: "Suspended user"
+                  description: "User account that has been suspended"
+                  value:
+                    id: 4
+                    username: "suspended_user"
+                    email: "suspended@example.com"
+                    role: "user"
+                    status: "suspended"
+                    permissions: []
+                    profile:
+                      first_name: "Suspended"
+                      last_name: "User"
+                      created_at: "2025-01-10T10:00:00Z"
+                      last_login: "2025-01-12T15:00:00Z"
+                    stats:
+                      login_count: 10
+                      last_active: "2025-01-12T15:00:00Z"
+                      suspension_reason: "Policy violation"
+                incomplete_profile:
+                  summary: "User with incomplete profile"
+                  description: "User missing profile information"
+                  value:
+                    id: 5
+                    username: "incomplete"
+                    email: "incomplete@example.com"
+                    role: "user"
+                    status: "active"
+                    permissions: ["read"]
+                    profile:
+                      created_at: "2025-01-15T09:00:00Z"
+                      last_login: null
+                    stats:
+                      login_count: 0
+                      last_active: null
+        '403':
+          description: Access forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                access_denied:
+                  summary: "Access denied"
+                  value:
+                    error: "FORBIDDEN"
+                    message: "You don't have permission to access this user"
+                    code: 403
+                suspended_account:
+                  summary: "Account suspended"
+                  value:
+                    error: "ACCOUNT_SUSPENDED"
+                    message: "Your account has been suspended"
+                    code: 403
+                    details:
+                      suspension_date: "2025-01-12T15:00:00Z"
+                      reason: "Policy violation"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                user_not_found:
+                  summary: "User not found"
+                  value:
+                    error: "NOT_FOUND"
+                    message: "User with ID 999 not found"
+                    code: 404
+                deleted_user:
+                  summary: "User was deleted"
+                  value:
+                    error: "USER_DELETED"
+                    message: "This user account has been deleted"
+                    code: 404
+
+  # Product Management
+  /products:
+    get:
+      summary: List products
+      description: Get product catalog
+      operationId: listProducts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [electronics, clothing, books, home]
+        - name: available
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+              examples:
+                empty_catalog:
+                  summary: "Empty product catalog"
+                  description: "No products available"
+                  value: []
+                single_product:
+                  summary: "Single product"
+                  description: "One product in catalog"
+                  value:
+                    - id: "PR001"
+                      name: "Wireless Headphones"
+                      price: 99.99
+                      category: "electronics"
+                      available: true
+                      stock: 15
+                few_products:
+                  summary: "Small catalog"
+                  description: "Few products available"
+                  value:
+                    - id: "PR001"
+                      name: "Wireless Headphones"
+                      price: 99.99
+                      category: "electronics"
+                      available: true
+                      stock: 15
+                    - id: "PR002"
+                      name: "Cotton T-Shirt"
+                      price: 19.99
+                      category: "clothing"
+                      available: true
+                      stock: 50
+                    - id: "PR003"
+                      name: "Programming Book"
+                      price: 39.99
+                      category: "books"
+                      available: false
+                      stock: 0
+                full_catalog:
+                  summary: "Full product catalog"
+                  description: "Complete product listing"
+                  value:
+                    - id: "PR001"
+                      name: "Wireless Headphones"
+                      price: 99.99
+                      category: "electronics"
+                      available: true
+                      stock: 15
+                    - id: "PR002"
+                      name: "Cotton T-Shirt"
+                      price: 19.99
+                      category: "clothing"
+                      available: true
+                      stock: 50
+                    - id: "PR003"
+                      name: "Programming Book"
+                      price: 39.99
+                      category: "books"
+                      available: true
+                      stock: 25
+                    - id: "PR004"
+                      name: "Coffee Mug"
+                      price: 12.99
+                      category: "home"
+                      available: true
+                      stock: 100
+                    - id: "PR005"
+                      name: "Smartphone"
+                      price: 599.99
+                      category: "electronics"
+                      available: true
+                      stock: 8
+                out_of_stock:
+                  summary: "Out of stock products"
+                  description: "Products not available"
+                  value:
+                    - id: "PR003"
+                      name: "Programming Book"
+                      price: 39.99
+                      category: "books"
+                      available: false
+                      stock: 0
+                    - id: "PR006"
+                      name: "Limited Edition Item"
+                      price: 199.99
+                      category: "electronics"
+                      available: false
+                      stock: 0
+
+  # Order Management
+  /orders:
+    get:
+      summary: List orders
+      description: Get user orders
+      operationId: listOrders
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+              examples:
+                no_orders:
+                  summary: "No orders"
+                  description: "User has no orders"
+                  value: []
+                single_order:
+                  summary: "Single order"
+                  value:
+                    - id: "ORD001"
+                      status: "delivered"
+                      total: 99.99
+                      items: 1
+                      created_at: "2025-01-10T10:00:00Z"
+                multiple_orders:
+                  summary: "Multiple orders"
+                  value:
+                    - id: "ORD001"
+                      status: "delivered"
+                      total: 99.99
+                      items: 1
+                      created_at: "2025-01-10T10:00:00Z"
+                    - id: "ORD002"
+                      status: "pending"
+                      total: 159.98
+                      items: 2
+                      created_at: "2025-01-14T15:30:00Z"
+                    - id: "ORD003"
+                      status: "shipped"
+                      total: 39.99
+                      items: 1
+                      created_at: "2025-01-12T09:15:00Z"
+                order_history:
+                  summary: "Complete order history"
+                  value:
+                    - id: "ORD001"
+                      status: "delivered"
+                      total: 99.99
+                      items: 1
+                      created_at: "2025-01-01T10:00:00Z"
+                    - id: "ORD002"
+                      status: "delivered"
+                      total: 159.98
+                      items: 2
+                      created_at: "2025-01-05T15:30:00Z"
+                    - id: "ORD003"
+                      status: "delivered"
+                      total: 39.99
+                      items: 1
+                      created_at: "2025-01-08T09:15:00Z"
+                    - id: "ORD004"
+                      status: "cancelled"
+                      total: 79.98
+                      items: 2
+                      created_at: "2025-01-12T14:00:00Z"
+                    - id: "ORD005"
+                      status: "pending"
+                      total: 249.99
+                      items: 3
+                      created_at: "2025-01-15T11:00:00Z"
+
+  # Health and Status
+  /health:
+    get:
+      summary: Health check
+      description: Service health status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                healthy:
+                  summary: "Service healthy"
+                  value:
+                    status: "healthy"
+                    timestamp: "2025-01-15T10:30:00Z"
+                    uptime: 3600
+                    version: "1.0.0"
+                degraded:
+                  summary: "Service degraded"
+                  value:
+                    status: "degraded"
+                    timestamp: "2025-01-15T10:30:00Z"
+                    uptime: 3600
+                    version: "1.0.0"
+                    warnings: ["High memory usage", "Slow database responses"]
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                service_down:
+                  summary: "Service unavailable"
+                  value:
+                    error: "SERVICE_UNAVAILABLE"
+                    message: "Service is temporarily unavailable"
+                    code: 503
+                maintenance_mode:
+                  summary: "Maintenance mode"
+                  value:
+                    error: "MAINTENANCE"
+                    message: "Service is under maintenance"
+                    code: 503
+                    details:
+                      estimated_duration: "30 minutes"
+                      maintenance_window: "2025-01-15T11:00:00Z to 2025-01-15T11:30:00Z"
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - role
+        - status
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, user, guest]
+        status:
+          type: string
+          enum: [active, suspended, deleted]
+        created_at:
+          type: string
+          format: date-time
+
+    UserDetailed:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+            profile:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                created_at:
+                  type: string
+                  format: date-time
+                last_login:
+                  type: string
+                  format: date-time
+                  nullable: true
+            stats:
+              type: object
+              properties:
+                login_count:
+                  type: integer
+                last_active:
+                  type: string
+                  format: date-time
+                  nullable: true
+                suspension_reason:
+                  type: string
+                  nullable: true
+
+    UserCreate:
+      type: object
+      required:
+        - username
+        - email
+        - role
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, user, guest]
+          default: user
+
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - category
+        - available
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        category:
+          type: string
+          enum: [electronics, clothing, books, home]
+        available:
+          type: boolean
+        stock:
+          type: integer
+
+    Order:
+      type: object
+      required:
+        - id
+        - status
+        - total
+        - items
+        - created_at
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [pending, processing, shipped, delivered, cancelled]
+        total:
+          type: number
+          format: float
+        items:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: integer
+        version:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer
+        details:
+          type: object
+          additionalProperties: true
