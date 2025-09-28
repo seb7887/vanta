@@ -1,0 +1,225 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-09-27T21:01:46.772447-03:00",
+  "coverage": {
+    "total_endpoints": 0,
+    "covered_endpoints": 0,
+    "coverage_percent": 0,
+    "endpoints": {},
+    "generated_at": "0001-01-01T00:00:00Z",
+    "summary": {
+      "by_method": null,
+      "by_status_code": null,
+      "by_path": null
+    }
+  },
+  "compliance": {
+    "total_requests": 5,
+    "valid_requests": 3,
+    "invalid_requests": 2,
+    "total_responses": 0,
+    "valid_responses": 0,
+    "invalid_responses": 0,
+    "compliance_percent": 0,
+    "generated_at": "0001-01-01T00:00:00Z",
+    "errors_by_type": {
+      "invalid_json": 1,
+      "missing_required_field": 1
+    },
+    "errors_by_endpoint": {
+      "POST /users": 2
+    },
+    "violations": [
+      {
+        "endpoint": "POST /users",
+        "method": "POST",
+        "type": "missing_required_field",
+        "message": "Required field 'name' is missing",
+        "count": 1,
+        "last_seen": "2025-09-27T21:01:46.772106-03:00"
+      },
+      {
+        "endpoint": "POST /users",
+        "method": "POST",
+        "type": "invalid_json",
+        "message": "Invalid JSON in request body: invalid character '}' looking for beginning of value",
+        "count": 1,
+        "last_seen": "2025-09-27T21:01:46.7722-03:00"
+      }
+    ]
+  },
+  "endpoint_stats": {
+    "POST /users": {
+      "path": "/users",
+      "method": "POST",
+      "request_count": 5,
+      "response_count": 0,
+      "valid_requests": 3,
+      "invalid_requests": 2,
+      "valid_responses": 0,
+      "invalid_responses": 0,
+      "status_codes": {},
+      "error_types": {
+        "invalid_json": 1,
+        "missing_required_field": 1
+      },
+      "first_seen": "2025-09-27T21:01:46.771982-03:00",
+      "last_seen": "2025-09-27T21:01:46.77243-03:00",
+      "average_latency": 0,
+      "examples": [
+        {
+          "request_id": "",
+          "timestamp": "2025-09-27T21:01:46.771936-03:00",
+          "valid": true
+        },
+        {
+          "request_id": "",
+          "timestamp": "2025-09-27T21:01:46.771992-03:00",
+          "valid": false,
+          "error_types": [
+            "missing_required_field"
+          ]
+        },
+        {
+          "request_id": "",
+          "timestamp": "2025-09-27T21:01:46.77212-03:00",
+          "valid": false,
+          "error_types": [
+            "invalid_json"
+          ]
+        },
+        {
+          "request_id": "",
+          "timestamp": "2025-09-27T21:01:46.772207-03:00",
+          "valid": true
+        },
+        {
+          "request_id": "",
+          "timestamp": "2025-09-27T21:01:46.772352-03:00",
+          "valid": true
+        }
+      ]
+    }
+  },
+  "request_history": [
+    {
+      "request_id": "",
+      "endpoint": {
+        "path": "/users",
+        "method": "POST",
+        "found": true
+      },
+      "timestamp": "2025-09-27T21:01:46.771936-03:00",
+      "result": {
+        "valid": true,
+        "endpoint": {
+          "path": "/users",
+          "method": "POST",
+          "found": true
+        },
+        "timestamp": "2025-09-27T21:01:46.771936-03:00"
+      }
+    },
+    {
+      "request_id": "",
+      "endpoint": {
+        "path": "/users",
+        "method": "POST",
+        "found": true
+      },
+      "timestamp": "2025-09-27T21:01:46.771992-03:00",
+      "result": {
+        "valid": false,
+        "errors": [
+          {
+            "type": "missing_required_field",
+            "field": "body.name",
+            "location": "body",
+            "message": "Required field 'name' is missing",
+            "severity": "error"
+          }
+        ],
+        "endpoint": {
+          "path": "/users",
+          "method": "POST",
+          "found": true
+        },
+        "timestamp": "2025-09-27T21:01:46.771992-03:00"
+      }
+    },
+    {
+      "request_id": "",
+      "endpoint": {
+        "path": "/users",
+        "method": "POST",
+        "found": true
+      },
+      "timestamp": "2025-09-27T21:01:46.77212-03:00",
+      "result": {
+        "valid": false,
+        "errors": [
+          {
+            "type": "invalid_json",
+            "field": "",
+            "location": "body",
+            "message": "Invalid JSON in request body: invalid character '}' looking for beginning of value",
+            "severity": "error"
+          }
+        ],
+        "endpoint": {
+          "path": "/users",
+          "method": "POST",
+          "found": true
+        },
+        "timestamp": "2025-09-27T21:01:46.77212-03:00"
+      }
+    },
+    {
+      "request_id": "",
+      "endpoint": {
+        "path": "/users",
+        "method": "POST",
+        "found": true
+      },
+      "timestamp": "2025-09-27T21:01:46.772207-03:00",
+      "result": {
+        "valid": true,
+        "endpoint": {
+          "path": "/users",
+          "method": "POST",
+          "found": true
+        },
+        "timestamp": "2025-09-27T21:01:46.772207-03:00"
+      }
+    },
+    {
+      "request_id": "",
+      "endpoint": {
+        "path": "/users",
+        "method": "POST",
+        "found": true
+      },
+      "timestamp": "2025-09-27T21:01:46.772352-03:00",
+      "result": {
+        "valid": true,
+        "endpoint": {
+          "path": "/users",
+          "method": "POST",
+          "found": true
+        },
+        "timestamp": "2025-09-27T21:01:46.772352-03:00"
+      }
+    }
+  ],
+  "response_history": [],
+  "config": {
+    "max_history_size": 1000,
+    "report_interval": 300000000000,
+    "auto_save": true,
+    "save_path": "./reports",
+    "include_examples": true,
+    "persist_data": true,
+    "data_file": "./validation-data.json",
+    "auto_save_interval": 30000000000
+  }
+}

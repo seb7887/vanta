@@ -195,6 +195,19 @@ func (p *OpenAPIParser) convertOperation(op *openapi3.Operation) *Operation {
 				if mediaTypeObj.Example != nil {
 					mto.Example = mediaTypeObj.Example
 				}
+				if len(mediaTypeObj.Examples) > 0 {
+					mto.Examples = make(map[string]ExampleObject)
+					for name, exampleRef := range mediaTypeObj.Examples {
+						if exampleRef != nil && exampleRef.Value != nil {
+							mto.Examples[name] = ExampleObject{
+								Summary:       exampleRef.Value.Summary,
+								Description:   exampleRef.Value.Description,
+								Value:         exampleRef.Value.Value,
+								ExternalValue: exampleRef.Value.ExternalValue,
+							}
+						}
+					}
+				}
 				response.Content[mediaType] = mto
 			}
 
@@ -329,6 +342,22 @@ func (p *OpenAPIParser) extractEndpoints(spec *openapi3.T) {
 							if mediaTypeObj.Schema != nil {
 								mto.Schema = p.convertSchema(mediaTypeObj.Schema.Value)
 							}
+							if mediaTypeObj.Example != nil {
+								mto.Example = mediaTypeObj.Example
+							}
+							if len(mediaTypeObj.Examples) > 0 {
+								mto.Examples = make(map[string]ExampleObject)
+								for name, exampleRef := range mediaTypeObj.Examples {
+									if exampleRef != nil && exampleRef.Value != nil {
+										mto.Examples[name] = ExampleObject{
+											Summary:       exampleRef.Value.Summary,
+											Description:   exampleRef.Value.Description,
+											Value:         exampleRef.Value.Value,
+											ExternalValue: exampleRef.Value.ExternalValue,
+										}
+									}
+								}
+							}
 							response.Content[mediaType] = mto
 						}
 
@@ -395,7 +424,7 @@ func ValidateSpecification(spec *Specification) error {
 	for path, pathItem := range spec.Paths {
 		hasOperation := false
 		if pathItem.GET != nil || pathItem.POST != nil || pathItem.PUT != nil ||
-		   pathItem.DELETE != nil || pathItem.PATCH != nil {
+			pathItem.DELETE != nil || pathItem.PATCH != nil {
 			hasOperation = true
 		}
 
